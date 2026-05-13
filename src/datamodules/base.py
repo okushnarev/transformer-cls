@@ -1,18 +1,9 @@
-import sys
-from pathlib import Path
-
 import lightning as L
 import pandas as pd
-import torch
 from sklearn.preprocessing import StandardScaler
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 
 from src.data_processing import segment_split
-
-# Add project root to PATH
-project_root = Path(__file__).resolve().parent.parent
-sys.path.append(str(project_root))
-
 from src.paths import ProjectPaths
 
 
@@ -85,7 +76,7 @@ class BaseDataModule(L.LightningDataModule):
         self.df_test[self._scale_cols] = scaler.transform(self.df_test[self._scale_cols])
         self.df_val[self._scale_cols] = scaler.transform(self.df_val[self._scale_cols])
 
-    def _prep_dataset(self, df) -> torch.utils.data.Dataset:
+    def _prep_dataset(self, df) -> TensorDataset:
         ...
 
     def _prep_dataloader(self, df, **dataloader_params):

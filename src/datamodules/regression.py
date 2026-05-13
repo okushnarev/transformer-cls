@@ -1,15 +1,7 @@
-import sys
-from pathlib import Path
-
 import torch
 from torch.utils.data import TensorDataset
 
 from src.data_processing import create_sequences
-
-# Add project root to PATH
-project_root = Path(__file__).resolve().parent.parent
-sys.path.append(str(project_root))
-
 from src.datamodules.base import BaseDataModule
 
 
