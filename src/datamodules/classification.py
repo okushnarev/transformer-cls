@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import torch
+from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import TensorDataset
 
 from src.data_processing import create_sequences
@@ -10,15 +11,15 @@ from src.data_processing import create_sequences
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
-from src.datamodules.base_datamodule import BaseDataModule
+from src.datamodules.base import BaseDataModule
 
 
-class RegressionDataModule(BaseDataModule):
+class ClassificationDataModule(BaseDataModule):
     def __init__(
             self,
             ds_name: str,
             features: list[str],
-            reg_targets: list[str],
+            cls_target: str,
             group_cols: list[str],
             stratify_col: str,
             segment_size: int,
@@ -45,9 +46,16 @@ class RegressionDataModule(BaseDataModule):
             seed=seed,
         )
 
-        self.reg_targets = reg_targets
-        self._raw_cols = list(set(self.group_cols + self.features + self.reg_targets + [self.stratify_col]))
-        self._scale_cols = self.features + self.reg_targets
+        self.cls_target = cls_target
+        self._raw_cols = list(set(self.group_cols + self.features + [self.cls_target, self.stratify_col]))
+
+    def setup(self, stage: str):
+        super().setup(stage=stage)
+
+        label_encoder = LabelEncoder()
+        self.df_train[self.cls_target] = label_encoder.fit_transform(self.df_train[self.cls_target])
+        self.df_test[self.cls_target] = label_encoder.transform(self.df_test[self.cls_target])
+        self.df_val[self.cls_target] = label_encoder.transform(self.df_val[self.cls_target])
 
     def _prep_dataset(self, df):
         X = torch.tensor(
@@ -61,16 +69,16 @@ class RegressionDataModule(BaseDataModule):
             dtype=torch.float
         )
 
-        y_reg = torch.tensor(
+        y_cls = torch.tensor(
             create_sequences(
                 df,
                 group_by=self.group_cols,
-                cols=self.reg_targets,
+                cols=self.cls_target,
                 length=self.sequence_length,
                 mode='last'
 
             ),
-            dtype=torch.float
+            dtype=torch.long
         )
 
-        return TensorDataset(X, y_reg)
+        return TensorDataset(X, y_cls)
