@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+
 def segment_split(
         df: pd.DataFrame,
         group_cols: list[str],
         stratify_col: str,
         segment_col: str,
         **kwargs) -> tuple[pd.DataFrame, pd.DataFrame]:
-
     df = df.copy()
 
     # Prepare group cols
