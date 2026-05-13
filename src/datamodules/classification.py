@@ -22,6 +22,7 @@ class ClassificationDataModule(BaseDataModule):
             num_workers: int = 4,
             pin_memory: bool = True,
             seed: int = 69,
+            **kwargs
     ):
         super().__init__(
             ds_name=ds_name,
@@ -36,6 +37,7 @@ class ClassificationDataModule(BaseDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             seed=seed,
+            **kwargs
         )
 
         self.cls_target = cls_target

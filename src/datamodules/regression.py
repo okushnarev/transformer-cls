@@ -21,6 +21,7 @@ class RegressionDataModule(BaseDataModule):
             num_workers: int = 4,
             pin_memory: bool = True,
             seed: int = 69,
+            **kwargs
     ):
         super().__init__(
             ds_name=ds_name,
@@ -35,6 +36,7 @@ class RegressionDataModule(BaseDataModule):
             num_workers=num_workers,
             pin_memory=pin_memory,
             seed=seed,
+            **kwargs
         )
 
         self.reg_targets = reg_targets
