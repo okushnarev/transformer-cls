@@ -1,8 +1,11 @@
+from typing import Optional
+
 import lightning as L
 import pandas as pd
 import torch
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
+from pandas import DataFrame
 
 from src.data_processing import create_sequences, segment_split
 from src.paths import ProjectPaths
@@ -13,10 +16,12 @@ class BaseDataModule(L.LightningDataModule):
             self,
             ds_name: str,
             features: list[str],
-            group_cols: list[str],
+            group_cols: str | list[str],
             stratify_col: str,
-            segment_size: int,
-            sequence_length: int,
+            cls_target: Optional[str] = None,
+            reg_targets: Optional[list[str]] = [],
+            segment_size: int = 100,
+            sequence_length: int = 10,
             test_size: float = 0.2,
             val_size: float = 0.1,
             batch_size: int = 4096,
@@ -40,20 +45,32 @@ class BaseDataModule(L.LightningDataModule):
         self.val_size = val_size
 
         self.features = features
-        self.group_cols = group_cols
+        self.group_cols = group_cols if isinstance(group_cols, list) else [group_cols]
         self.stratify_col = stratify_col
-        self._raw_cols = list(set(self.group_cols + self.features + [self.stratify_col]))
-        self._scale_cols = self.features
+        self.cls_target = cls_target
+        self.reg_targets = reg_targets
+
+        self._all_cols = list(set(
+            self.group_cols
+            + self.features
+            + self.reg_targets
+            + ([self.cls_target] if self.cls_target else [])
+            + [self.stratify_col]
+        ))
+        self._scale_cols = self.features + self.reg_targets
 
         self._segment_col = 'segment_id'
 
+    def prepare_data(self) -> DataFrame:
+        return pd.read_csv(self.data_dir)
+
     def setup(self, stage: str):
-        self.df_raw = pd.read_csv(self.data_dir)
-        self.df_raw = self.df_raw[self._raw_cols]
-        self.df_raw[self._segment_col] = self.df_raw.groupby(self.group_cols).cumcount() // self.segment_size
+        self.df = self.prepare_data()
+        self.df = self.df[self._all_cols]
+        self.df[self._segment_col] = self.df.groupby(self.group_cols).cumcount() // self.segment_size
 
         self.df_train, self.df_test = segment_split(
-            self.df_raw,
+            self.df,
             group_cols=self.group_cols,
             stratify_col=self.stratify_col,
             segment_col=self._segment_col,
@@ -73,13 +90,54 @@ class BaseDataModule(L.LightningDataModule):
 
         self.group_cols = [self._segment_col] + self.group_cols
 
-        scaler = StandardScaler()
-        self.df_train[self._scale_cols] = scaler.fit_transform(self.df_train[self._scale_cols])
-        self.df_test[self._scale_cols] = scaler.transform(self.df_test[self._scale_cols])
-        self.df_val[self._scale_cols] = scaler.transform(self.df_val[self._scale_cols])
+        self.scaler = StandardScaler()
+        self.df_train[self._scale_cols] = self.scaler.fit_transform(self.df_train[self._scale_cols])
+        self.df_test[self._scale_cols] = self.scaler.transform(self.df_test[self._scale_cols])
+        self.df_val[self._scale_cols] = self.scaler.transform(self.df_val[self._scale_cols])
+
+        if self.cls_target:
+            self.label_encoder = LabelEncoder()
+            self.df_train[self.cls_target] = self.label_encoder.fit_transform(self.df_train[self.cls_target])
+            self.df_test[self.cls_target] = self.label_encoder.transform(self.df_test[self.cls_target])
+            self.df_val[self.cls_target] = self.label_encoder.transform(self.df_val[self.cls_target])
 
     def _prep_dataset(self, df) -> TensorDataset:
-        ...
+        X = torch.tensor(
+            create_sequences(
+                df,
+                group_by=self.group_cols,
+                cols=self.features,
+                length=self.sequence_length,
+                mode='full'
+            ),
+            dtype=torch.float
+        )
+
+        y_cls = torch.tensor(
+            create_sequences(
+                df,
+                group_by=self.group_cols,
+                cols=self.cls_target,
+                length=self.sequence_length,
+                mode='last'
+
+            ),
+            dtype=torch.long
+        ) if self.cls_target else None
+
+        y_reg = torch.tensor(
+            create_sequences(
+                df,
+                group_by=self.group_cols,
+                cols=self.reg_targets,
+                length=self.sequence_length,
+                mode='last'
+
+            ),
+            dtype=torch.float
+        ) if self.reg_targets else None
+
+        return TensorDataset(*(item for item in (X, y_cls, y_reg) if item is not None))
 
     def _prep_dataloader(self, df, **dataloader_params):
         dataset = self._prep_dataset(df)
@@ -114,187 +172,6 @@ class BaseDataModule(L.LightningDataModule):
 
     def predict_dataloader(self):
         return self._prep_dataloader(
-            self.df_raw,
+            self.df,
             shuffle=False
         )
-
-
-class ClassificationDataModule(BaseDataModule):
-    def __init__(
-            self,
-            ds_name: str,
-            features: list[str],
-            cls_target: str,
-            group_cols: list[str],
-            stratify_col: str,
-            segment_size: int,
-            sequence_length: int,
-            test_size: float = 0.2,
-            val_size: float = 0.1,
-            batch_size: int = 4096,
-            num_workers: int = 4,
-            pin_memory: bool = True,
-            seed: int = 69,
-            **kwargs
-    ):
-        super().__init__(
-            ds_name=ds_name,
-            features=features,
-            group_cols=group_cols,
-            stratify_col=stratify_col,
-            segment_size=segment_size,
-            sequence_length=sequence_length,
-            test_size=test_size,
-            val_size=val_size,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            seed=seed,
-            **kwargs
-        )
-
-        self.cls_target = cls_target
-        self._raw_cols = list(set(self.group_cols + self.features + [self.cls_target, self.stratify_col]))
-
-    def setup(self, stage: str):
-        super().setup(stage=stage)
-
-        label_encoder = LabelEncoder()
-        self.df_train[self.cls_target] = label_encoder.fit_transform(self.df_train[self.cls_target])
-        self.df_test[self.cls_target] = label_encoder.transform(self.df_test[self.cls_target])
-        self.df_val[self.cls_target] = label_encoder.transform(self.df_val[self.cls_target])
-
-    def _prep_dataset(self, df):
-        X = torch.tensor(
-            create_sequences(
-                df,
-                group_by=self.group_cols,
-                cols=self.features,
-                length=self.sequence_length,
-                mode='full'
-            ),
-            dtype=torch.float
-        )
-
-        y_cls = torch.tensor(
-            create_sequences(
-                df,
-                group_by=self.group_cols,
-                cols=self.cls_target,
-                length=self.sequence_length,
-                mode='last'
-
-            ),
-            dtype=torch.long
-        )
-
-        return TensorDataset(X, y_cls)
-
-
-class RegressionDataModule(BaseDataModule):
-    def __init__(
-            self,
-            ds_name: str,
-            features: list[str],
-            reg_targets: list[str],
-            group_cols: list[str],
-            stratify_col: str,
-            segment_size: int,
-            sequence_length: int,
-            test_size: float = 0.2,
-            val_size: float = 0.1,
-            batch_size: int = 4096,
-            num_workers: int = 4,
-            pin_memory: bool = True,
-            seed: int = 69,
-            **kwargs
-    ):
-        super().__init__(
-            ds_name=ds_name,
-            features=features,
-            group_cols=group_cols,
-            stratify_col=stratify_col,
-            segment_size=segment_size,
-            sequence_length=sequence_length,
-            test_size=test_size,
-            val_size=val_size,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            seed=seed,
-            **kwargs
-        )
-
-        self.reg_targets = reg_targets
-        self._raw_cols = list(set(self.group_cols + self.features + self.reg_targets + [self.stratify_col]))
-        self._scale_cols = self.features + self.reg_targets
-
-    def _prep_dataset(self, df):
-        X = torch.tensor(
-            create_sequences(
-                df,
-                group_by=self.group_cols,
-                cols=self.features,
-                length=self.sequence_length,
-                mode='full'
-            ),
-            dtype=torch.float
-        )
-
-        y_reg = torch.tensor(
-            create_sequences(
-                df,
-                group_by=self.group_cols,
-                cols=self.reg_targets,
-                length=self.sequence_length,
-                mode='last'
-
-            ),
-            dtype=torch.float
-        )
-
-        return TensorDataset(X, y_reg)
-
-
-class MixedDataModule(ClassificationDataModule, RegressionDataModule):
-    def __init__(
-            self,
-            ds_name: str,
-            features: list[str],
-            cls_target: str,
-            reg_targets: list[str],
-            group_cols: list[str],
-            stratify_col: str,
-            segment_size: int,
-            sequence_length: int,
-            test_size: float = 0.2,
-            val_size: float = 0.1,
-            batch_size: int = 4096,
-            num_workers: int = 4,
-            pin_memory: bool = True,
-            seed: int = 69,
-    ):
-        super().__init__(
-            ds_name=ds_name,
-            features=features,
-            cls_target=cls_target,
-            reg_targets=reg_targets,
-            group_cols=group_cols,
-            stratify_col=stratify_col,
-            segment_size=segment_size,
-            sequence_length=sequence_length,
-            test_size=test_size,
-            val_size=val_size,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            seed=seed,
-        )
-
-        self._raw_cols = list(set(self.group_cols + self.features + self.reg_targets + [self.cls_target, self.stratify_col]))
-
-    def _prep_dataset(self, df):
-        X, y_cls = ClassificationDataModule._prep_dataset(self, df).tensors
-        _, y_reg = RegressionDataModule._prep_dataset(self, df).tensors
-
-        return TensorDataset(X, y_cls, y_reg)
