@@ -39,14 +39,12 @@ class Transformer(Module):
 
         self.activation = activation
 
-        self.in_proj = (nn.Linear(self.in_dim, d_model))
+        self.in_proj = nn.Linear(self.in_dim, d_model)
         surf_models = torch.rand(out_dim_cls, d_model)
         self.register_buffer('surf_models', surf_models)
 
-        self.pos_encoder = (
-            PositionalEncoding(
-                d_model=self.d_model,
-            )
+        self.pos_encoder = PositionalEncoding(
+            d_model=self.d_model,
         )
 
         in_encoder_layer = TransformerEncoderLayer(
@@ -59,12 +57,10 @@ class Transformer(Module):
             activation=self.activation,
         )
 
-        self.in_encoder: TransformerEncoder = (
-            TransformerEncoder(
-                in_encoder_layer,
-                num_layers=self.num_layers,
-                enable_nested_tensor=self.enable_nested_tensor
-            )
+        self.in_encoder = TransformerEncoder(
+            in_encoder_layer,
+            num_layers=self.num_layers,
+            enable_nested_tensor=self.enable_nested_tensor
         )
 
         in_decoder_layer = TransformerDecoderLayer(
@@ -77,36 +73,31 @@ class Transformer(Module):
             activation=self.activation,
         )
 
-        self.surf_models_decoder: TransformerDecoder = (
-            TransformerDecoder(
-                in_decoder_layer,
-                num_layers=self.num_layers,
-            )
+        self.surf_models_decoder = TransformerDecoder(
+            in_decoder_layer,
+            num_layers=self.num_layers,
         )
 
-        self.cross_attn: nn.MultiheadAttention = (
-            nn.MultiheadAttention(
-                self.d_model,
-                self.n_head,
-                dropout=self.dropout,
-                bias=self.bias,
-                batch_first=self.batch_first,
-            )
+        self.cross_attn = nn.MultiheadAttention(
+            self.d_model,
+            self.n_head,
+            dropout=self.dropout,
+            bias=self.bias,
+            batch_first=self.batch_first,
         )
 
-        self.norm1 = (nn.LayerNorm(self.d_model, eps=self.layer_norm_eps, bias=self.bias))
-        self.norm2 = (nn.LayerNorm(self.d_model, eps=self.layer_norm_eps, bias=self.bias))
-        self.ca_ffn = (
-            nn.Sequential(
-                nn.Linear(self.d_model, self.dim_feedforward, bias=self.bias),
-                nn.GELU(),
-                nn.Dropout(p=self.dropout),
-                nn.Linear(self.dim_feedforward, self.d_model, bias=self.bias),
-                nn.Dropout(p=self.dropout),
-            )
+        self.norm1 = nn.LayerNorm(self.d_model, eps=self.layer_norm_eps, bias=self.bias)
+        self.norm2 = nn.LayerNorm(self.d_model, eps=self.layer_norm_eps, bias=self.bias)
+        self.ca_ffn = nn.Sequential(
+            nn.Linear(self.d_model, self.dim_feedforward, bias=self.bias),
+            nn.GELU(),
+            nn.Dropout(p=self.dropout),
+            nn.Linear(self.dim_feedforward, self.d_model, bias=self.bias),
+            nn.Dropout(p=self.dropout),
         )
-        self.reg_ffn = (nn.Linear(self.d_model * self.sequence_length, out_dim_reg))
-        self.cls_ffn = (nn.Linear(self.sequence_length, 1))
+
+        self.reg_ffn = nn.Linear(self.d_model * self.sequence_length, out_dim_reg)
+        self.cls_ffn = nn.Linear(self.sequence_length, 1)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         x = self.in_proj(x)
