@@ -5,7 +5,7 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
-class BaseModel(L.LightningModule):
+class LitBaseModel(L.LightningModule):
     def __init__(self):
         super().__init__()
         self.save_hyperparameters()
@@ -31,3 +31,4 @@ class BaseModel(L.LightningModule):
             min_lr=1e-6,
         )
         return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor='train_loss')
+

@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer, TransformerEncoder, TransformerEncoderLayer
 
-from src.models.base_model import BaseModel
+from src.models.base_model import LitBaseModel
 from src.models.modules import PositionalEncoding
 
 
@@ -146,7 +146,7 @@ class Transformer(Module):
         return cls_out, reg_out
 
 
-class LitTransformer(BaseModel):
+class LitTransformer(LitBaseModel):
     def __init__(
             self,
             in_dim: int = 6,
