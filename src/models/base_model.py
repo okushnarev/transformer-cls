@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 import lightning as L
+from sympy.printing.pytorch import torch
+from torch.nn.functional import cross_entropy
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
@@ -10,7 +12,6 @@ class LitBaseModel(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self._epoch_metrics = defaultdict(float)
-
 
     def process_epoch_metrics(self, metrics: dict, batch_idx: int, max_batches: int):
         for k, v in metrics.items():
@@ -30,5 +31,34 @@ class LitBaseModel(L.LightningModule):
             patience=5,
             min_lr=1e-6,
         )
-        return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor='train_loss')
+        return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor='overall/train_loss')
 
+
+class LitClassificationModel(LitBaseModel):
+
+    def training_step(self, batch, batch_idx):
+        X, y = batch
+        outputs = self(X)
+        loss = cross_entropy(outputs, y.squeeze())
+        self.log('cls/train_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log('overall/train_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        # log with epoch
+        self.process_epoch_metrics({'epoch/cls/train_loss': loss.item()}, batch_idx, self.trainer.num_training_batches)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        X, y = batch
+        outputs = self(X)
+        # loss
+        loss = cross_entropy(outputs, y.squeeze())
+        self.log('cls/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log('overall/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        # accuracy
+        predicted = torch.argmax(outputs, 1)
+        correct = (predicted.view(-1, 1) == y).sum().item()
+        accuracy = correct / len(y)
+        self.log('cls/val_acc', accuracy, prog_bar=True, on_epoch=True, on_step=False)
+
+        # log with epoch
+        metrics = {'epoch/cls/val_loss': loss.item(), 'epoch/cls/val_acc': accuracy}
+        self.process_epoch_metrics(metrics, batch_idx, self.trainer.num_val_batches[0])
