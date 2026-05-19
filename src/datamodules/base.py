@@ -28,9 +28,8 @@ class BaseDataModule(L.LightningDataModule):
             num_workers: int = 4,
             pin_memory: bool = True,
             seed: int = 69,
-            **kwargs
     ):
-        super().__init__(**kwargs)
+        super().__init__()
         self.save_hyperparameters()
         self.data_dir = ProjectPaths.get_raw_data_dir() / ds_name
 
