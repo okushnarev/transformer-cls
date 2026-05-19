@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import lightning as L
 from sympy.printing.pytorch import torch
-from torch.nn.functional import cross_entropy
+from torch.nn.functional import cross_entropy, mse_loss
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
@@ -35,7 +35,6 @@ class LitBaseModel(L.LightningModule):
 
 
 class LitClassificationModel(LitBaseModel):
-
     def training_step(self, batch, batch_idx):
         X, y = batch
         outputs = self(X)
@@ -61,4 +60,27 @@ class LitClassificationModel(LitBaseModel):
 
         # log with epoch
         metrics = {'epoch/cls/val_loss': loss.item(), 'epoch/cls/val_acc': accuracy}
+        self.process_epoch_metrics(metrics, batch_idx, self.trainer.num_val_batches[0])
+
+
+class LitRegressionModel(LitBaseModel):
+    def training_step(self, batch, batch_idx):
+        X, y = batch
+        outputs = self(X)
+        loss = mse_loss(outputs, y.squeeze())
+        self.log('reg/train_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log('overall/train_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        # log with epoch
+        self.process_epoch_metrics({'epoch/reg/train_loss': loss.item()}, batch_idx, self.trainer.num_training_batches)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        X, y = batch
+        outputs = self(X)
+        # loss
+        loss = mse_loss(outputs, y.squeeze())
+        self.log('reg/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log('overall/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        # log with epoch
+        metrics = {'epoch/reg/val_loss': loss.item()}
         self.process_epoch_metrics(metrics, batch_idx, self.trainer.num_val_batches[0])
