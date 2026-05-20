@@ -10,7 +10,7 @@ from src.models.modules import PositionalEncoding
 class Transformer(Module):
     def __init__(
             self,
-            in_dim: int = 6,
+            input_dim: int = 6,
             sequence_length: int = 10,
             out_dim_cls: int = 4,
             out_dim_reg: int = 3,
@@ -22,7 +22,7 @@ class Transformer(Module):
     ):
         super().__init__()
 
-        self.in_dim = in_dim
+        self.input_dim = input_dim
         self.sequence_length = sequence_length
 
         self.batch_first = True
@@ -39,7 +39,7 @@ class Transformer(Module):
 
         self.activation = activation
 
-        self.in_proj = nn.Linear(self.in_dim, d_model)
+        self.in_proj = nn.Linear(self.input_dim, d_model)
         surf_models = torch.rand(out_dim_cls, d_model)
         self.register_buffer('surf_models', surf_models)
 
@@ -140,7 +140,7 @@ class Transformer(Module):
 class LitTransformer(LitMixedModel):
     def __init__(
             self,
-            in_dim: int = 6,
+            input_dim: int = 6,
             sequence_length: int = 10,
             out_dim_cls: int = 4,
             out_dim_reg: int = 3,
@@ -155,7 +155,7 @@ class LitTransformer(LitMixedModel):
             start_lr=start_lr
         )
         model = Transformer(
-            in_dim=in_dim,
+            input_dim=input_dim,
             sequence_length=sequence_length,
             out_dim_cls=out_dim_cls,
             out_dim_reg=out_dim_reg,
