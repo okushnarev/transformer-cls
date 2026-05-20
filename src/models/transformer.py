@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer, TransformerEncoder, TransformerEncoderLayer
 
-from src.models.base_model import LitBaseModel, LitMixedModel
+from src.models.base_model import LitMixedModel
 from src.models.modules import PositionalEncoding
 
 
