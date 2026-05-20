@@ -8,9 +8,10 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 class LitBaseModel(L.LightningModule):
-    def __init__(self):
+    def __init__(self, start_lr: float = 1e-3):
         super().__init__()
         self.save_hyperparameters()
+        self.start_lr = start_lr
         self._epoch_metrics = defaultdict(float)
 
     def process_epoch_metrics(self, metrics: dict, batch_idx: int, max_batches: int):
@@ -28,7 +29,7 @@ class LitBaseModel(L.LightningModule):
         self.process_epoch_metrics({f'epoch/{name}': value}, batch_idx, self.trainer.num_training_batches)
 
     def configure_optimizers(self):
-        optimizer = AdamW(self.parameters(), lr=1e-3)
+        optimizer = AdamW(self.parameters(), lr=self.start_lr)
         scheduler = ReduceLROnPlateau(
             optimizer,
             mode='min',

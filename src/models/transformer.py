@@ -148,9 +148,12 @@ class LitTransformer(LitMixedModel):
             n_head: int = 1,
             num_layers: int = 1,
             activation: str = 'gelu',
-            dim_feedforward: int = 64
+            dim_feedforward: int = 64,
+            start_lr: float = 1e-3,
     ):
-        super().__init__()
+        super().__init__(
+            start_lr=start_lr
+        )
         model = Transformer(
             in_dim=in_dim,
             sequence_length=sequence_length,
