@@ -60,11 +60,11 @@ class BaseDataModule(L.LightningDataModule):
 
         self._segment_col = 'segment_id'
 
-    def prepare_data(self) -> DataFrame:
+    def apply_transforms(self) -> DataFrame:
         return pd.read_csv(self.data_dir)
 
     def setup(self, stage: str):
-        self.df = self.prepare_data()
+        self.df = self.apply_transforms()
         self.df = self.df[self._all_cols]
         self.df[self._segment_col] = self.df.groupby(self.group_cols).cumcount() // self.segment_size
 

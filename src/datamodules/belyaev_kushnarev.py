@@ -38,7 +38,7 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             seed=seed,
         )
 
-    def prepare_data(self) -> DataFrame:
-        df = super().prepare_data()
+    def apply_transforms(self) -> DataFrame:
+        df = super().apply_transforms()
         df[['dx', 'dy', 'dang']] = df.groupby(self.group_cols)[['xpos', 'ypos', 'ang']].diff().fillna(0)
         return df
