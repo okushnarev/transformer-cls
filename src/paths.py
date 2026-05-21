@@ -18,7 +18,7 @@ class ProjectPaths:
         """
         Returns: datasets/raw/
         """
-        return cls._ROOT / 'datasets' / 'raw'
+        return cls._ROOT / 'datasets'
 
 
 if __name__ == '__main__':
