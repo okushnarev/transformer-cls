@@ -5,6 +5,7 @@ from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer, Transf
 
 from src.models.base_model import LitMixedModel
 from src.models.modules import PositionalEncoding
+from src.models.utils import init_weights
 
 
 class Transformer(Module):
@@ -62,6 +63,7 @@ class Transformer(Module):
             num_layers=self.num_layers,
             enable_nested_tensor=self.enable_nested_tensor
         )
+        init_weights(self.in_encoder)
 
         in_decoder_layer = TransformerDecoderLayer(
             d_model=self.d_model,
@@ -77,6 +79,7 @@ class Transformer(Module):
             in_decoder_layer,
             num_layers=self.num_layers,
         )
+        init_weights(self.surf_models_decoder)
 
         self.cross_attn = nn.MultiheadAttention(
             self.d_model,
