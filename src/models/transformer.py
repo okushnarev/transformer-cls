@@ -103,18 +103,20 @@ class Transformer(Module):
         self.cls_ffn = nn.Linear(self.sequence_length, 1)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
+        batch_size = x.size(0)
+
         x = self.in_proj(x)
         x = self.pos_encoder(x)
         encoder_out = self.in_encoder(x)
-        decoder_out = []
-        for batch_idx, batch in enumerate(x):
-            _dec_out = self.surf_models_decoder(
-                self.surf_models,
-                encoder_out[batch_idx]
-            )
-            self.surf_models = _dec_out.detach()
-            decoder_out.append(_dec_out)
-        decoder_out = torch.stack(decoder_out)
+
+        batched_surf_models = self.surf_models.unsqueeze(0).expand(batch_size, -1, -1)
+        decoder_out = self.surf_models_decoder(
+            batched_surf_models,
+            encoder_out
+        )
+
+        new_surf_models = decoder_out.detach()
+        self.surf_models = new_surf_models.mean(dim=0)
 
         if self.norm_first:
             ca_out, ca_weights = self.cross_attn(
