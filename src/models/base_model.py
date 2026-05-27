@@ -38,6 +38,9 @@ class LitBaseModel(L.LightningModule):
         )
         return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor='overall/train_loss')
 
+    def predict_step(self, batch, batch_idx):
+        X, other = batch
+        return self(X), other
 
 class LitClassificationModel(LitBaseModel):
     def training_step(self, batch, batch_idx):
