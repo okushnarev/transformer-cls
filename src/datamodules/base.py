@@ -90,15 +90,21 @@ class BaseDataModule(L.LightningDataModule):
         self.group_cols = [self._segment_col] + self.group_cols
 
         self.scaler = StandardScaler()
-        self.df_train[self._scale_cols] = self.scaler.fit_transform(self.df_train[self._scale_cols])
-        self.df_test[self._scale_cols] = self.scaler.transform(self.df_test[self._scale_cols])
-        self.df_val[self._scale_cols] = self.scaler.transform(self.df_val[self._scale_cols])
+        self._transform_cols(self.scaler, self._scale_cols)
 
         if self.cls_target:
             self.label_encoder = LabelEncoder()
-            self.df_train[self.cls_target] = self.label_encoder.fit_transform(self.df_train[self.cls_target])
-            self.df_test[self.cls_target] = self.label_encoder.transform(self.df_test[self.cls_target])
-            self.df_val[self.cls_target] = self.label_encoder.transform(self.df_val[self.cls_target])
+            self._transform_cols(self.label_encoder, self.cls_target)
+
+    def _transform_cols(self, cls, cols: list[str] | str) -> None:
+        """
+        Method to apply transform (like Scaler or LabelEncoder) to columns.
+        :param cls: Class instance that represents transform.
+        :param cols: Cols to apply transform.
+        """
+        self.df_train[cols] = cls.fit_transform(self.df_train[cols])
+        self.df_test[cols] = cls.transform(self.df_test[cols])
+        self.df_val[cols] = cls.transform(self.df_val[cols])
 
     def _prep_dataset(self, df) -> TensorDataset:
         X = torch.tensor(
