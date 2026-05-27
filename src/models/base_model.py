@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import lightning as L
 from sympy.printing.pytorch import torch
-from torch.nn.functional import cross_entropy, mse_loss
+from torch.nn.functional import cross_entropy, mse_loss, softmax
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
@@ -64,6 +64,10 @@ class LitClassificationModel(LitBaseModel):
         accuracy = correct / len(y)
         self.log_step_and_epoch_metric('cls/val_acc', accuracy, batch_idx)
 
+    def predict_step(self, batch, batch_idx):
+        cls_out = self(batch[0])
+        return softmax(cls_out, dim=-1)
+
 
 class LitRegressionModel(LitBaseModel):
     def training_step(self, batch, batch_idx):
@@ -119,3 +123,7 @@ class LitMixedModel(LitBaseModel):
 
         overall_loss = cls_loss + reg_loss
         self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx)
+
+    def predict_step(self, batch, batch_idx):
+        cls_out, reg_out = self(batch[0])
+        return softmax(cls_out, dim=-1), reg_out
