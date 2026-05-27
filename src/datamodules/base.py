@@ -152,7 +152,6 @@ class BaseDataModule(L.LightningDataModule):
         return self._prep_dataloader(
             self.df_train,
             shuffle=True,
-            drop_last=True,
             persistent_workers=True if self.num_workers > 0 else False,
         )
 
