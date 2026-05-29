@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import lightning as L
@@ -27,7 +28,6 @@ class BaseDataModule(L.LightningDataModule):
             batch_size: int = 4096,
             num_workers: int = 4,
             pin_memory: bool = True,
-            seed: int = 69,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -38,7 +38,7 @@ class BaseDataModule(L.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
-        self.seed = seed
+        self.seed = os.environ.get('PL_GLOBAL_SEED', 42)
 
         self.test_size = test_size
         self.val_size = val_size
