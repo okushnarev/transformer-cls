@@ -56,7 +56,6 @@ class BaseDataModule(L.LightningDataModule):
             + ([self.cls_target] if self.cls_target else [])
             + [self.stratify_col]
         ))
-        self._scale_cols = self.features + self.reg_targets
 
         self._segment_col = 'segment_id'
 
@@ -89,8 +88,12 @@ class BaseDataModule(L.LightningDataModule):
 
         self.group_cols = [self._segment_col] + self.group_cols
 
-        self.scaler = StandardScaler()
-        self._transform_cols(self.scaler, self._scale_cols)
+        self.feature_scaler = StandardScaler()
+        self._transform_cols(self.feature_scaler, self.features)
+
+        if self.reg_targets:
+            self.reg_scaler = StandardScaler()
+            self._transform_cols(self.reg_scaler, self.reg_targets)
 
         if self.cls_target:
             self.label_encoder = LabelEncoder()
