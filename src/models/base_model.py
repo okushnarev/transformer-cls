@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Literal
 
 import lightning as L
 from sympy.printing.pytorch import torch
@@ -24,9 +25,17 @@ class LitBaseModel(L.LightningModule):
             for k in metrics:
                 del self._epoch_metrics[k]
 
-    def log_step_and_epoch_metric(self, name, value, batch_idx):
+    def log_step_and_epoch_metric(self, name, value, batch_idx, stage: Literal['train', 'val'] = 'train'):
+        match stage:
+            case 'train':
+                max_batches = self.trainer.num_training_batches
+            case 'val':
+                max_batches = self.trainer.num_val_batches
+            case _:
+                raise ValueError(f'Cannot determine max number of batches for stage: {stage}')
+
         self.log(name, value, prog_bar=True, on_epoch=True, on_step=False)
-        self.process_epoch_metrics({f'epoch/{name}': value}, batch_idx, self.trainer.num_training_batches)
+        self.process_epoch_metrics({f'epoch/{name}': value}, batch_idx, max_batches)
 
     def configure_optimizers(self):
         optimizer = AdamW(self.parameters(), lr=self.start_lr)
@@ -40,6 +49,7 @@ class LitBaseModel(L.LightningModule):
 
     def predict_step(self, batch, batch_idx):
         return self(batch[0])
+
 
 class LitClassificationModel(LitBaseModel):
     def training_step(self, batch, batch_idx):
@@ -55,14 +65,14 @@ class LitClassificationModel(LitBaseModel):
         outputs = self(X)
         # loss
         loss = cross_entropy(outputs, y.squeeze())
-        self.log_step_and_epoch_metric('cls/val_loss', loss, batch_idx)
+        self.log_step_and_epoch_metric('cls/val_loss', loss, batch_idx, stage='val')
         self.log('overall/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
 
         # accuracy
         predicted = torch.argmax(outputs, 1)
         correct = (predicted.view(-1, 1) == y).sum().item()
         accuracy = correct / len(y)
-        self.log_step_and_epoch_metric('cls/val_acc', accuracy, batch_idx)
+        self.log_step_and_epoch_metric('cls/val_acc', accuracy, batch_idx, stage='val')
 
     def predict_step(self, batch, batch_idx):
         cls_out = self(batch[0])
@@ -83,7 +93,7 @@ class LitRegressionModel(LitBaseModel):
         outputs = self(X)
         # loss
         loss = mse_loss(outputs, y.squeeze())
-        self.log_step_and_epoch_metric('reg/val_loss', loss, batch_idx)
+        self.log_step_and_epoch_metric('reg/val_loss', loss, batch_idx, stage='val')
         self.log('overall/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
 
 
@@ -110,19 +120,19 @@ class LitMixedModel(LitBaseModel):
 
         # Classification
         cls_loss = cross_entropy(out_cls, y_cls.squeeze())
-        self.log_step_and_epoch_metric('cls/val_loss', cls_loss, batch_idx)
+        self.log_step_and_epoch_metric('cls/val_loss', cls_loss, batch_idx, stage='val')
         # accuracy
         predicted = torch.argmax(out_cls, 1)
         correct = (predicted.view(-1, 1) == y_cls).sum().item()
         accuracy = correct / len(y_cls)
-        self.log_step_and_epoch_metric('cls/val_acc', accuracy, batch_idx)
+        self.log_step_and_epoch_metric('cls/val_acc', accuracy, batch_idx, stage='val')
 
         # Regression
         reg_loss = mse_loss(out_reg, y_reg.squeeze())
-        self.log_step_and_epoch_metric('reg/val_loss', reg_loss, batch_idx)
+        self.log_step_and_epoch_metric('reg/val_loss', reg_loss, batch_idx, stage='val')
 
         overall_loss = cls_loss + reg_loss
-        self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx)
+        self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
 
     def predict_step(self, batch, batch_idx):
         cls_out, reg_out = self(batch[0])
