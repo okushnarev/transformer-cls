@@ -38,7 +38,7 @@ class BaseDataModule(L.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
-        self.seed = os.environ.get('PL_GLOBAL_SEED', 42)
+        self.seed = int(os.environ.get('PL_GLOBAL_SEED', 42))
 
         self.test_size = test_size
         self.val_size = val_size
