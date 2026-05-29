@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer, TransformerEncoder, TransformerEncoderLayer
 
-from src.models.base_model import LitMixedModel
+from src.models.base_model import LitMixedModel, LitRegressionModel
 from src.models.modules import PositionalEncoding
 from src.models.utils import init_weights
 
@@ -175,7 +175,7 @@ class LitTransformer(LitMixedModel):
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         return self.model(x)
 
-class LitTransformerRegression(LitMixedModel):
+class LitTransformerRegression(LitRegressionModel):
     def __init__(
             self,
             input_dim: int = 6,
