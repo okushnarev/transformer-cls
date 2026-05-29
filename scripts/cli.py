@@ -1,4 +1,6 @@
 from lightning.pytorch.cli import LightningCLI
+import torch
+torch.set_float32_matmul_precision('medium')
 
 import sys
 from pathlib import Path
