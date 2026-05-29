@@ -57,7 +57,7 @@ class LitClassificationModel(LitBaseModel):
         outputs = self(X)
         loss = cross_entropy(outputs, y.squeeze())
         self.log_step_and_epoch_metric('cls/train_loss', loss, batch_idx)
-        self.log('overall/train_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log_step_and_epoch_metric('overall/train_loss', loss, batch_idx)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -66,7 +66,7 @@ class LitClassificationModel(LitBaseModel):
         # loss
         loss = cross_entropy(outputs, y.squeeze())
         self.log_step_and_epoch_metric('cls/val_loss', loss, batch_idx, stage='val')
-        self.log('overall/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log_step_and_epoch_metric('overall/val_loss', loss, batch_idx, stage='val')
 
         # accuracy
         predicted = torch.argmax(outputs, 1)
@@ -85,7 +85,7 @@ class LitRegressionModel(LitBaseModel):
         outputs = self(X)
         loss = mse_loss(outputs, y.squeeze())
         self.log_step_and_epoch_metric('reg/train_loss', loss, batch_idx)
-        self.log('overall/train_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log_step_and_epoch_metric('overall/train_loss', loss, batch_idx)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -94,7 +94,7 @@ class LitRegressionModel(LitBaseModel):
         # loss
         loss = mse_loss(outputs, y.squeeze())
         self.log_step_and_epoch_metric('reg/val_loss', loss, batch_idx, stage='val')
-        self.log('overall/val_loss', loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.log_step_and_epoch_metric('overall/val_loss', loss, batch_idx, stage='val')
 
 
 class LitMixedModel(LitBaseModel):
