@@ -17,7 +17,10 @@ class MyLightningCLI(LightningCLI):
         )
 
 def cli_main():
-    cli = MyLightningCLI(parser_kwargs={'parser_mode': 'omegaconf'})
+    cli = MyLightningCLI(
+        parser_kwargs={'parser_mode': 'omegaconf'},
+        save_config_kwargs={'overwrite': True},
+    )
 
 
 if __name__ == "__main__":
