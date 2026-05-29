@@ -174,3 +174,36 @@ class LitTransformer(LitMixedModel):
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         return self.model(x)
+
+class LitTransformerRegression(LitMixedModel):
+    def __init__(
+            self,
+            input_dim: int = 6,
+            sequence_length: int = 10,
+            out_dim_cls: int = 4,
+            out_dim_reg: int = 3,
+            d_model: int = 128,
+            n_head: int = 1,
+            num_layers: int = 1,
+            activation: str = 'gelu',
+            dim_feedforward: int = 64,
+            start_lr: float = 1e-3,
+    ):
+        super().__init__(
+            start_lr=start_lr
+        )
+        model = Transformer(
+            input_dim=input_dim,
+            sequence_length=sequence_length,
+            out_dim_cls=out_dim_cls,
+            out_dim_reg=out_dim_reg,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            activation=activation,
+            dim_feedforward=dim_feedforward,
+        )
+        self.model = torch.compile(model)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.model(x)[1]
