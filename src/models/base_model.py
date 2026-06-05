@@ -42,10 +42,10 @@ class LitBaseModel(L.LightningModule):
         scheduler = ReduceLROnPlateau(
             optimizer,
             mode='min',
-            patience=5,
+            patience=2,
             min_lr=1e-6,
         )
-        return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor='overall/train_loss')
+        return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor='overall/val_loss')
 
     def predict_step(self, batch, batch_idx):
         return self(batch[0])
