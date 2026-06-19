@@ -30,7 +30,7 @@ class LitBaseModel(L.LightningModule):
             case 'train':
                 max_batches = self.trainer.num_training_batches
             case 'val':
-                max_batches = self.trainer.num_val_batches
+                max_batches = self.trainer.num_val_batches[0]
             case _:
                 raise ValueError(f'Cannot determine max number of batches for stage: {stage}')
 
