@@ -16,6 +16,7 @@ class Transformer(Module):
             sequence_length: int = 10,
             out_dim_cls: int = 4,
             out_dim_reg: int = 3,
+            out_reg_mlp_hidden_dims: list[int] = [],
             d_model: int = 128,
             n_head: int = 1,
             num_layers: int = 1,
@@ -26,6 +27,7 @@ class Transformer(Module):
 
         self.input_dim = input_dim
         self.in_mlp_hidden_dims = in_mlp_hidden_dims
+        self.out_reg_mlp_hidden_dims = out_reg_mlp_hidden_dims
         self.sequence_length = sequence_length
 
         self.batch_first = True
@@ -105,7 +107,15 @@ class Transformer(Module):
             nn.Dropout(p=self.dropout),
         )
 
-        self.reg_ffn = nn.Linear(self.d_model * self.sequence_length, out_dim_reg)
+        if self.out_reg_mlp_hidden_dims:
+            self.reg_ffn = build_mlp(
+                self.d_model * self.sequence_length,
+                self.out_reg_mlp_hidden_dims,
+                out_dim_reg,
+                self.dropout
+            )
+        else:
+            self.reg_ffn = nn.Linear(self.d_model * self.sequence_length, out_dim_reg)
         self.cls_ffn = nn.Linear(self.sequence_length, 1)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
@@ -182,6 +192,7 @@ class LitTransformer(LitMixedModel):
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         return self.model(x)
+
 
 class LitTransformerRegression(LitRegressionModel):
     def __init__(
