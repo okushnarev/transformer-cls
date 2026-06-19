@@ -5,7 +5,7 @@ from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer, Transf
 
 from src.models.base_model import LitMixedModel, LitRegressionModel
 from src.models.modules import PositionalEncoding
-from src.models.utils import init_weights
+from src.models.utils import build_mlp, init_weights
 
 
 class Transformer(Module):
@@ -43,17 +43,7 @@ class Transformer(Module):
         self.activation = activation
 
         if self.in_mlp_hidden_dims:
-            layers = []
-            current_dim = self.input_dim
-            for dim in self.in_mlp_hidden_dims:
-                layers.extend([
-                    nn.Linear(current_dim, dim),
-                    nn.ReLU(),
-                    nn.Dropout(self.dropout)
-                ])
-                current_dim = dim
-            layers.append(nn.Linear(current_dim, d_model))
-            self.in_proj = nn.Sequential(*layers)
+            self.in_proj = build_mlp(self.input_dim, self.in_mlp_hidden_dims, d_model, self.dropout)
         else:
             self.in_proj = nn.Linear(self.input_dim, d_model)
 
