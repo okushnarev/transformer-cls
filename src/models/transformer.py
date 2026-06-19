@@ -162,6 +162,7 @@ class LitTransformer(LitMixedModel):
     def __init__(
             self,
             input_dim: int = 6,
+            in_mlp_hidden_dims: list[int] = [],
             sequence_length: int = 10,
             out_dim_cls: int = 4,
             out_dim_reg: int = 3,
@@ -177,6 +178,7 @@ class LitTransformer(LitMixedModel):
         )
         model = Transformer(
             input_dim=input_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
             sequence_length=sequence_length,
             out_dim_cls=out_dim_cls,
             out_dim_reg=out_dim_reg,
@@ -195,6 +197,7 @@ class LitTransformerRegression(LitRegressionModel):
     def __init__(
             self,
             input_dim: int = 6,
+            in_mlp_hidden_dims: list[int] = [],
             sequence_length: int = 10,
             out_dim_cls: int = 4,
             out_dim_reg: int = 3,
@@ -210,6 +213,7 @@ class LitTransformerRegression(LitRegressionModel):
         )
         model = Transformer(
             input_dim=input_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
             sequence_length=sequence_length,
             out_dim_cls=out_dim_cls,
             out_dim_reg=out_dim_reg,
