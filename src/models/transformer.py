@@ -12,6 +12,7 @@ class Transformer(Module):
     def __init__(
             self,
             input_dim: int = 6,
+            in_mlp_hidden_dims: list[int] = [],
             sequence_length: int = 10,
             out_dim_cls: int = 4,
             out_dim_reg: int = 3,
@@ -24,6 +25,7 @@ class Transformer(Module):
         super().__init__()
 
         self.input_dim = input_dim
+        self.in_mlp_hidden_dims = in_mlp_hidden_dims
         self.sequence_length = sequence_length
 
         self.batch_first = True
@@ -40,7 +42,21 @@ class Transformer(Module):
 
         self.activation = activation
 
-        self.in_proj = nn.Linear(self.input_dim, d_model)
+        if self.in_mlp_hidden_dims:
+            layers = []
+            current_dim = self.input_dim
+            for dim in self.in_mlp_hidden_dims:
+                layers.extend([
+                    nn.Linear(current_dim, dim),
+                    nn.ReLU(),
+                    nn.Dropout(self.dropout)
+                ])
+                current_dim = dim
+            layers.append(nn.Linear(current_dim, d_model))
+            self.in_proj = nn.Sequential(*layers)
+        else:
+            self.in_proj = nn.Linear(self.input_dim, d_model)
+
         surf_models = torch.rand(out_dim_cls, d_model)
         self.register_buffer('surf_models', surf_models)
 
