@@ -45,7 +45,14 @@ class LitBaseModel(L.LightningModule):
             patience=2,
             min_lr=1e-6,
         )
-        return dict(optimizer=optimizer, lr_scheduler=scheduler, monitor='overall/val_loss')
+        return {
+            'optimizer':    optimizer,
+            'lr_scheduler': {
+                'scheduler': scheduler,
+                'monitor':   'overall/val_loss',
+                'strict':    False
+            }
+        }
 
     def predict_step(self, batch, batch_idx):
         return self(batch[0])
