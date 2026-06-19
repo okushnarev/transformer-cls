@@ -45,11 +45,16 @@ class LitBaseModel(L.LightningModule):
             patience=2,
             min_lr=1e-6,
         )
+
+        val_frequency = self.trainer.check_val_every_n_epoch
+
         return {
             'optimizer':    optimizer,
             'lr_scheduler': {
                 'scheduler': scheduler,
                 'monitor':   'overall/val_loss',
+                'interval':  'epoch',
+                'frequency': val_frequency,
                 'strict':    False
             }
         }
