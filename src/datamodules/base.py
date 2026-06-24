@@ -86,7 +86,7 @@ class BaseDataModule(L.LightningDataModule):
             random_state=self.seed,
         )
 
-        self.group_cols = [self._segment_col] + self.group_cols
+        self.group_cols =  self.group_cols + [self._segment_col]
 
         self.feature_scaler = StandardScaler()
         self._transform_cols(self.feature_scaler, self.features)
