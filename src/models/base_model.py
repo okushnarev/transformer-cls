@@ -200,7 +200,13 @@ class LitMixedModelWeightedLoss(LitMixedModel):
         self.log_step_and_epoch_metric('reg/train_loss', info_losses['reg_loss'], batch_idx)
         self.log_step_and_epoch_metric('reg/train_loss_weighted', info_losses['reg_loss_weighted'], batch_idx)
 
+        # Overall loss
         self.log_step_and_epoch_metric('overall/train_loss', overall_loss, batch_idx)
+
+        # Weigths
+        self.log_step_and_epoch_metric('uncertainty/s_cls', self.loss.s_cls, batch_idx)
+        self.log_step_and_epoch_metric('uncertainty/s_reg', self.loss.s_reg, batch_idx)
+
         return overall_loss
 
     def validation_step(self, batch, batch_idx):
