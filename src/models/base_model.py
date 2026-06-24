@@ -1,11 +1,13 @@
 from collections import defaultdict
-from typing import Literal
+from typing import Callable, Literal
 
 import lightning as L
 from sympy.printing.pytorch import torch
 from torch.nn.functional import cross_entropy, mse_loss, softmax
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+from src.models.utils import MultiTaskLoss
 
 
 class LitBaseModel(L.LightningModule):
@@ -149,3 +151,80 @@ class LitMixedModel(LitBaseModel):
     def predict_step(self, batch, batch_idx):
         cls_out, reg_out = self(batch[0])
         return softmax(cls_out, dim=-1), reg_out
+
+
+class LitMixedModelWeightedLoss(LitMixedModel):
+    def __init__(
+            self,
+            model: torch.nn.Module,
+            reg_loss_fn: Callable = mse_loss,
+            cls_loss_fn: Callable = cross_entropy,
+            model_start_lr: float = 1e-3,
+            loss_start_lr: float = 1e-2,
+    ):
+        super().__init__(start_lr=model_start_lr)
+
+        self.loss = MultiTaskLoss(reg_loss_fn=reg_loss_fn, cls_loss_fn=cls_loss_fn)
+        self.loss_start_lr = loss_start_lr
+        self.model = model
+
+    def configure_optimizers(self):
+        config = super().configure_optimizers()
+        optimizer = AdamW([
+            {'params': self.model.parameters(), 'lr': self.start_lr},
+            {'params': self.loss.parameters(), 'lr': self.loss_start_lr},
+        ])
+
+        # Update 'optimizer' dict field and scheduler to reference the new optimizer
+        config['optimizer'] = optimizer
+        config['lr_scheduler']['scheduler'].optimizer = optimizer
+
+        return config
+
+    def forward(self, X):
+        return self.model(X)
+
+    def training_step(self, batch, batch_idx):
+        X, y_cls, y_reg = batch
+        out_cls, out_reg = self(X)
+
+        overall_loss, info_losses = self.loss(
+            out_cls, y_cls.squeeze(),
+            out_reg, y_reg.squeeze(),
+        )
+        # Classification
+        self.log_step_and_epoch_metric('cls/train_loss', info_losses['cls_loss'], batch_idx)
+        self.log_step_and_epoch_metric('cls/train_loss_weighted', info_losses['cls_loss_weighted'], batch_idx)
+
+        # Regression
+        self.log_step_and_epoch_metric('reg/train_loss', info_losses['reg_loss'], batch_idx)
+        self.log_step_and_epoch_metric('reg/train_loss_weighted', info_losses['reg_loss_weighted'], batch_idx)
+
+        self.log_step_and_epoch_metric('overall/train_loss', overall_loss, batch_idx)
+        return overall_loss
+
+    def validation_step(self, batch, batch_idx):
+        X, y_cls, y_reg = batch
+        out_cls, out_reg = self(X)
+
+        overall_loss, info_losses = self.loss(
+            out_cls, y_cls.squeeze(),
+            out_reg, y_reg.squeeze(),
+        )
+        # Classification
+        self.log_step_and_epoch_metric('cls/val_loss', info_losses['cls_loss'], batch_idx, stage='val')
+        self.log_step_and_epoch_metric('cls/val_loss_weighted', info_losses['cls_loss_weighted'], batch_idx,
+                                       stage='val')
+
+        # accuracy
+        predicted = torch.argmax(out_cls, 1)
+        correct = (predicted.view(-1, 1) == y_cls).sum().item()
+        accuracy = correct / len(y_cls)
+        self.log_step_and_epoch_metric('cls/val_acc', accuracy, batch_idx, stage='val')
+
+        # Regression
+        self.log_step_and_epoch_metric('reg/val_loss', info_losses['reg_loss'], batch_idx, stage='val')
+        self.log_step_and_epoch_metric('reg/val_loss_weighted', info_losses['reg_loss_weighted'], batch_idx,
+                                       stage='val')
+
+        self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
