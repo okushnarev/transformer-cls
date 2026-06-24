@@ -1,9 +1,12 @@
+from typing import Callable
+
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer, TransformerEncoder, TransformerEncoderLayer
+from torch.nn.functional import cross_entropy, mse_loss
 
-from src.models.base_model import LitMixedModel, LitRegressionModel
+from src.models.base_model import LitMixedModel, LitMixedModelWeightedLoss, LitRegressionModel
 from src.models.modules import PositionalEncoding
 from src.models.utils import build_mlp, init_weights
 
@@ -194,6 +197,49 @@ class LitTransformer(LitMixedModel):
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         return self.model(x)
+
+
+class LitTransformerWeightedLoss(LitMixedModelWeightedLoss):
+    def __init__(
+            self,
+            input_dim: int = 6,
+            in_mlp_hidden_dims: list[int] = [],
+            sequence_length: int = 10,
+            out_dim_cls: int = 4,
+            out_dim_reg: int = 3,
+            out_reg_mlp_hidden_dims: list[int] = [],
+            d_model: int = 128,
+            n_head: int = 1,
+            num_layers: int = 1,
+            activation: str = 'gelu',
+            dim_feedforward: int = 64,
+            reg_loss_fn: Callable = mse_loss,
+            cls_loss_fn: Callable = cross_entropy,
+            model_start_lr: float = 1e-3,
+            loss_start_lr: float = 1e-2,
+    ):
+        model = Transformer(
+            input_dim=input_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            sequence_length=sequence_length,
+            out_dim_cls=out_dim_cls,
+            out_dim_reg=out_dim_reg,
+            out_reg_mlp_hidden_dims=out_reg_mlp_hidden_dims,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            activation=activation,
+            dim_feedforward=dim_feedforward,
+        )
+        model = torch.compile(model)
+
+        super().__init__(
+            model=model,
+            reg_loss_fn=reg_loss_fn,
+            cls_loss_fn=cls_loss_fn,
+            model_start_lr=model_start_lr,
+            loss_start_lr=loss_start_lr,
+        )
 
 
 class LitTransformerRegression(LitRegressionModel):
