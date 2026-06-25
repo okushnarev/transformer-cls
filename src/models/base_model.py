@@ -27,7 +27,20 @@ class LitBaseModel(L.LightningModule):
             for k in metrics:
                 del self._epoch_metrics[k]
 
-    def log_step_and_epoch_metric(self, name, value, batch_idx, stage: Literal['train', 'val'] = 'train'):
+    def log_step_and_epoch_metric(
+            self,
+            name: str,
+            value: torch.Tensor,
+            batch_idx: int,
+            stage: Literal['train', 'val'] = 'train',
+            **log_kwargs,
+    ):
+        log_kwargs = dict(
+            prog_bar=True,
+            on_epoch=True,
+            on_step=False,
+        ) | log_kwargs
+
         match stage:
             case 'train':
                 max_batches = self.trainer.num_training_batches
@@ -36,7 +49,7 @@ class LitBaseModel(L.LightningModule):
             case _:
                 raise ValueError(f'Cannot determine max number of batches for stage: {stage}')
 
-        self.log(name, value, prog_bar=True, on_epoch=True, on_step=False)
+        self.log(name, value, **log_kwargs)
         self.process_epoch_metrics({f'epoch/{name}': value}, batch_idx, max_batches)
 
     def configure_optimizers(self):
