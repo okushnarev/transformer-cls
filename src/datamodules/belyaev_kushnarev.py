@@ -17,6 +17,7 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             batch_size: int = 4096,
             num_workers: int = 4,
             pin_memory: bool = True,
+            seed: int = 69,
     ):
         super().__init__(
             # Dataset-specific arguments
@@ -34,6 +35,7 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
+            seed=seed,
         )
 
     def apply_transforms(self) -> DataFrame:
