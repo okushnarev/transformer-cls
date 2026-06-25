@@ -207,18 +207,20 @@ class LitMixedModelWeightedLoss(LitMixedModel):
         )
         # Classification
         self.log_step_and_epoch_metric('cls/train_loss', info_losses['cls_loss'], batch_idx)
-        self.log_step_and_epoch_metric('cls/train_loss_weighted', info_losses['cls_loss_weighted'], batch_idx)
+        self.log_step_and_epoch_metric('cls/train_loss_weighted', info_losses['cls_loss_weighted'], batch_idx,
+                                       prog_bar=False)
 
         # Regression
         self.log_step_and_epoch_metric('reg/train_loss', info_losses['reg_loss'], batch_idx)
-        self.log_step_and_epoch_metric('reg/train_loss_weighted', info_losses['reg_loss_weighted'], batch_idx)
+        self.log_step_and_epoch_metric('reg/train_loss_weighted', info_losses['reg_loss_weighted'], batch_idx,
+                                       prog_bar=False)
 
         # Overall loss
         self.log_step_and_epoch_metric('overall/train_loss', overall_loss, batch_idx)
 
         # Weigths
-        self.log_step_and_epoch_metric('uncertainty/s_cls', self.loss.s_cls, batch_idx)
-        self.log_step_and_epoch_metric('uncertainty/s_reg', self.loss.s_reg, batch_idx)
+        self.log_step_and_epoch_metric('uncertainty/s_cls', self.loss.s_cls, batch_idx, prog_bar=False)
+        self.log_step_and_epoch_metric('uncertainty/s_reg', self.loss.s_reg, batch_idx, prog_bar=False)
 
         return overall_loss
 
@@ -233,7 +235,7 @@ class LitMixedModelWeightedLoss(LitMixedModel):
         # Classification
         self.log_step_and_epoch_metric('cls/val_loss', info_losses['cls_loss'], batch_idx, stage='val')
         self.log_step_and_epoch_metric('cls/val_loss_weighted', info_losses['cls_loss_weighted'], batch_idx,
-                                       stage='val')
+                                       stage='val', prog_bar=False)
 
         # accuracy
         predicted = torch.argmax(out_cls, 1)
@@ -244,6 +246,6 @@ class LitMixedModelWeightedLoss(LitMixedModel):
         # Regression
         self.log_step_and_epoch_metric('reg/val_loss', info_losses['reg_loss'], batch_idx, stage='val')
         self.log_step_and_epoch_metric('reg/val_loss_weighted', info_losses['reg_loss_weighted'], batch_idx,
-                                       stage='val')
+                                       stage='val', prog_bar=False)
 
         self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
