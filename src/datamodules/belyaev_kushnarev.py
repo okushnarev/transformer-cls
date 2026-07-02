@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pandas import DataFrame
 
@@ -10,6 +10,7 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             self,
             features: list[str],
             mode: Literal['cls', 'reg', 'cls+reg'],
+            reg_targets: Optional[list[str]] = None,
             segment_size: int = 100,
             sequence_length: int = 10,
             test_size: float = 0.2,
@@ -25,7 +26,7 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             group_cols='exp_idx',
             stratify_col='surf',
             cls_target='surf' if 'cls' in mode else None,
-            reg_targets=['dx', 'dy', 'dang'] if 'reg' in mode else [],
+            reg_targets=reg_targets or ['dx', 'dy', 'dang'] if 'reg' in mode else [],
             # General arguments
             features=features,
             segment_size=segment_size,
