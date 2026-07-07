@@ -10,6 +10,7 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             self,
             features: list[str],
             mode: Literal['cls', 'reg', 'cls+reg'],
+            info_cols: Optional[list[str]] = [],
             reg_targets: Optional[list[str]] = None,
             segment_size: int = 100,
             sequence_length: int = 10,
@@ -25,6 +26,7 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             ds_name='belyaev_kushnarev.csv',
             group_cols='exp_idx',
             stratify_col='surf',
+            info_cols=info_cols,
             cls_target='surf' if 'cls' in mode else None,
             reg_targets=reg_targets or ['dx', 'dy', 'dang'] if 'reg' in mode else [],
             # General arguments

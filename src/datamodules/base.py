@@ -18,6 +18,7 @@ class BaseDataModule(L.LightningDataModule):
             features: list[str],
             group_cols: str | list[str],
             stratify_col: str,
+            info_cols: Optional[list[str]] = [],
             cls_target: Optional[str] = None,
             reg_targets: Optional[list[str]] = [],
             segment_size: int = 100,
@@ -46,6 +47,7 @@ class BaseDataModule(L.LightningDataModule):
         self.features = features
         self.group_cols = group_cols if isinstance(group_cols, list) else [group_cols]
         self.stratify_col = stratify_col
+        self.info_cols = info_cols
         self.cls_target = cls_target
         self.reg_targets = reg_targets
 
@@ -55,6 +57,7 @@ class BaseDataModule(L.LightningDataModule):
             + self.reg_targets
             + ([self.cls_target] if self.cls_target else [])
             + [self.stratify_col]
+            + self.info_cols
         ))
 
         self._segment_col = 'segment_id'
@@ -114,7 +117,7 @@ class BaseDataModule(L.LightningDataModule):
             create_sequences(
                 df,
                 group_by=self.group_cols,
-                cols=self.features,
+                cols=self.features + self.info_cols,
                 length=self.sequence_length,
                 mode='full'
             ),
