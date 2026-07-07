@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from torch.nn import GRU, Module
 
-from src.models.base_model import LitMixedModel
+from src.models.base_model import LitMixedModel, LitRegressionModel
 from src.models.utils import build_mlp
 
 
@@ -107,3 +107,37 @@ class LitRNN(LitMixedModel):
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         return self.model(x)
+
+
+class LitRNNRegression(LitRegressionModel):
+    def __init__(
+            self,
+            input_dim: int = 6,
+            in_mlp_hidden_dims: list[int] = [],
+            sequence_length: int = 10,
+            out_dim_cls: int = 4,
+            out_dim_reg: int = 3,
+            out_reg_mlp_hidden_dims: list[int] = [],
+            d_model: int = 128,
+            hidden_dim: int = 128,
+            num_layers: int = 1,
+            start_lr: float = 1e-3,
+    ):
+        super().__init__(
+            start_lr=start_lr
+        )
+        model = RNN(
+            input_dim=input_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            sequence_length=sequence_length,
+            out_dim_cls=out_dim_cls,
+            out_dim_reg=out_dim_reg,
+            out_reg_mlp_hidden_dims=out_reg_mlp_hidden_dims,
+            d_model=d_model,
+            hidden_dim=hidden_dim,
+            num_layers=num_layers,
+        )
+        self.model = torch.compile(model)
+
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
+        return self.model(x)[1]
