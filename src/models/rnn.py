@@ -17,7 +17,6 @@ class RNN(Module):
             d_model: int = 128,
             hidden_dim: int = 128,
             num_layers: int = 1,
-            activation: str = 'gelu',
     ):
         super().__init__()
 
@@ -37,7 +36,6 @@ class RNN(Module):
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
 
-        self.activation = activation
 
         if self.in_mlp_hidden_dims:
             self.in_proj = build_mlp(self.input_dim, self.in_mlp_hidden_dims, d_model, self.dropout)
