@@ -90,7 +90,7 @@ if __name__ == '__main__':
         features=features,
         mode='cls+reg',
         segment_size=100,
-        batch_size=1000,
+        batch_size=10000,
         num_workers=2,
     )
 
