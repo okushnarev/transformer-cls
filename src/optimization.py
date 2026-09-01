@@ -99,10 +99,10 @@ if __name__ == '__main__':
         sequence_length = trial.suggest_int('sequence_length', low=5, high=90, log=True)
 
         n_in_layers = trial.suggest_int('n_in_layers', low=1, high=5, log=True)
-        in_layers = [trial.suggest_int(f'in_layer_{i}', low=8, high=256, log=True) for i in range(n_in_layers)]
+        in_layers = [2 ** trial.suggest_int(f'in_layer_{i}_pow', low=3, high=8, log=True) for i in range(n_in_layers)]
 
         n_out_reg_layers = trial.suggest_int('n_out_reg_layers', low=1, high=5, log=True)
-        out_reg_layers = [trial.suggest_int(f'out_reg_layer_{i}', low=8, high=256, log=True) for i in
+        out_reg_layers = [2 ** trial.suggest_int(f'out_reg_layer_{i}_pow', low=3, high=8, log=True) for i in
                           range(n_out_reg_layers)]
 
         d_model = 2 ** trial.suggest_int('d_model_pow', low=4, high=8, log=True)
