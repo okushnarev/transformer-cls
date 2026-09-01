@@ -123,5 +123,6 @@ if __name__ == '__main__':
     optimize(
         model_class=model_class,
         datamodule_class=datamodule_class,
-        suggest_hparams=suggest_params
+        suggest_hparams=suggest_params,
+        timeout=20 * 60,
     )
