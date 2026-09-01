@@ -105,8 +105,8 @@ if __name__ == '__main__':
         out_reg_layers = [trial.suggest_int(f'out_reg_layer_{i}', low=8, high=256, log=True) for i in
                           range(n_out_reg_layers)]
 
-        d_model = trial.suggest_int('d_model', low=16, high=256, log=True)
-        dim_feedforward = trial.suggest_int('dim_feedforward', low=16, high=512, log=True)
+        d_model = 2 ** trial.suggest_int('d_model_pow', low=4, high=8, log=True)
+        dim_feedforward = 2 ** trial.suggest_int('dim_feedforward_pow', low=4, high=9, log=True)
 
         hparams = {
             'input_dim':               len(features),
