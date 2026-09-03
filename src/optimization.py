@@ -58,9 +58,7 @@ def optimize(
 
         return trainer.callback_metrics[monitor_metric].item()
 
-    pruner = optuna.pruners.HyperbandPruner(
-        max_resource=max_epochs,
-    )
+    pruner = optuna.pruners.HyperbandPruner()
 
     study = optuna.create_study(direction='minimize', pruner=pruner)
     study.optimize(
