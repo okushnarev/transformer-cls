@@ -101,12 +101,12 @@ def main():
         n_trials=args.n_trials,
         timeout=args.timeout,
     )
-    best_params = report.best_trial.params
-    for param, value in best_params.items():
+    best_params = {}
+    for param, value in report.best_trial.params.items():
         if (sfx := '_pow') in param:
             best_params[param.replace(sfx, '')] = 2 ** value
-            del best_params[param]
-
+        else:
+            best_params[param] = value
     print('Best params:')
     for k, v in best_params.items():
         print(f'\t{k}: {v}')
