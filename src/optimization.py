@@ -5,6 +5,7 @@ from typing import Callable, Any
 
 import optuna
 import lightning as L
+import torch
 from optuna.integration import PyTorchLightningPruningCallback
 
 
@@ -66,6 +67,7 @@ def optimize(
         n_trials=n_trials,
         timeout=timeout,
         gc_after_trial=True,
+        catch=(torch.OutOfMemoryError,)
     )
 
     return OptimizationReport(
