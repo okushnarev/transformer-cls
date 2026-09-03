@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 
+import pandas as pd
 from pandas import DataFrame
 
 from src.datamodules.base import BaseDataModule
@@ -81,7 +82,9 @@ class BelyaevKushnarevFutureDataModule(BelyaevKushnarevDataModule):
 
     def apply_transforms(self) -> DataFrame:
         df = super().apply_transforms()
-        df[self.reg_targets] = df[self.features].copy()
+        df_next = df[self.features].copy()
+        df_next = df_next.rename(columns=dict(zip(self.features, self.reg_targets)))
+        df = pd.concat((df, df_next), axis=1)
         return df
 
     def setup(self, stage: str):
