@@ -1,9 +1,18 @@
 import inspect
+from dataclasses import dataclass
 from typing import Callable, Any
 
 import optuna
 import lightning as L
 from optuna.integration import PyTorchLightningPruningCallback
+
+
+@dataclass
+class OptimizationReport:
+    study: optuna.Study
+    best_trial: optuna.Trial
+    best_value: float
+    n_finished_trials: int
 
 
 def optimize(
@@ -17,7 +26,7 @@ def optimize(
         max_epochs: int = 30,
         limit_val_batches: float = 1,
         monitor_metric: str = 'overall/val_loss',
-) -> None:
+) -> OptimizationReport:
     def objective(
             trial: optuna.trial.Trial,
     ) -> float:
@@ -57,13 +66,9 @@ def optimize(
         gc_after_trial=True,
     )
 
-    print(f'Number of finished trials: {len(study.trials)}')
-
-    print('Best trial:')
-    trial = study.best_trial
-
-    print(f'  Value: {trial.value}')
-
-    print('  Params: ')
-    for key, value in trial.params.items():
-        print(f'    {key}: {value}')
+    return OptimizationReport(
+        study=study,
+        best_trial=study.best_trial,
+        best_value=study.best_trial.value,
+        n_finished_trials=len(study.trials),
+    )
