@@ -115,7 +115,7 @@ def main():
     joblib.dump(report.study, study_path)
     logging.info('Study saved to {}'.format(study_path))
 
-    params_path = args.srudy_dir / 'best_params.json'
+    params_path = args.study_dir / 'best_params.json'
     with open(params_path, 'w') as file:
         json.dump(best_params, file)
     logging.info('Best params saved to {}'.format(params_path))
