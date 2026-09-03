@@ -1,5 +1,6 @@
 import inspect
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Any
 
 import optuna
@@ -19,6 +20,7 @@ def optimize(
         model_class: L.LightningModule,
         datamodule_class: L.LightningDataModule,
         suggest_hparams: Callable[[optuna.trial.Trial], dict[str, Any]],
+        log_dir: Path,
 
         n_trials=100,
         timeout=600,
@@ -26,6 +28,7 @@ def optimize(
         max_epochs: int = 30,
         limit_val_batches: float = 1,
         monitor_metric: str = 'overall/val_loss',
+
 ) -> OptimizationReport:
     def objective(
             trial: optuna.trial.Trial,
@@ -41,6 +44,7 @@ def optimize(
         dm = datamodule_class(**dm_params)
 
         trainer = L.Trainer(
+            default_root_dir=log_dir,
             logger=True,
             limit_val_batches=limit_val_batches,
             enable_checkpointing=False,
