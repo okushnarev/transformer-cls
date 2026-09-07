@@ -16,4 +16,4 @@ def min_diff_surf_upd(old_models: torch.Tensor, new_models: torch.Tensor) -> tor
 
 def random_surf_upd(old_models: torch.Tensor, new_models: torch.Tensor) -> torch.Tensor:
     rand_idx = torch.randint(high=new_models.shape[0], size=(1,))
-    return new_models[rand_idx]
+    return new_models[rand_idx].squeeze()
