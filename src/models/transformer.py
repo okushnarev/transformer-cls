@@ -179,9 +179,15 @@ class LitTransformer(LitMixedModel):
             dim_feedforward: int = 64,
             surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
             start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
     ):
         super().__init__(
-            start_lr=start_lr
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
         )
         model = Transformer(
             input_dim=input_dim,
@@ -222,6 +228,9 @@ class LitTransformerWeightedLoss(LitMixedModelWeightedLoss):
             cls_loss_fn: Callable = cross_entropy,
             model_start_lr: float = 1e-3,
             loss_start_lr: float = 1e-2,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
     ):
         model = Transformer(
             input_dim=input_dim,
@@ -245,6 +254,9 @@ class LitTransformerWeightedLoss(LitMixedModelWeightedLoss):
             cls_loss_fn=cls_loss_fn,
             model_start_lr=model_start_lr,
             loss_start_lr=loss_start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
         )
 
 
@@ -264,9 +276,15 @@ class LitTransformerRegression(LitRegressionModel):
             surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
             dim_feedforward: int = 64,
             start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
     ):
         super().__init__(
-            start_lr=start_lr
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
         )
         model = Transformer(
             input_dim=input_dim,

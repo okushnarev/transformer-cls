@@ -88,9 +88,15 @@ class LitRNN(LitMixedModel):
             hidden_dim: int = 128,
             num_layers: int = 1,
             start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
     ):
         super().__init__(
-            start_lr=start_lr
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
         )
         model = RNN(
             input_dim=input_dim,
@@ -122,9 +128,15 @@ class LitRNNRegression(LitRegressionModel):
             hidden_dim: int = 128,
             num_layers: int = 1,
             start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
     ):
         super().__init__(
-            start_lr=start_lr
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
         )
         model = RNN(
             input_dim=input_dim,

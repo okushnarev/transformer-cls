@@ -11,10 +11,19 @@ from src.models.utils import MultiTaskLoss
 
 
 class LitBaseModel(L.LightningModule):
-    def __init__(self, start_lr: float = 1e-3):
+    def __init__(
+            self,
+            start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,  # in eval epochs
+            lr_factor: float = 0.1,
+    ):
         super().__init__()
         self.save_hyperparameters()
         self.start_lr = start_lr
+        self.min_lr = min_lr
+        self.lr_patience = lr_patience
+        self.lr_factor = lr_factor
         self._epoch_metrics = defaultdict(float)
 
     def process_epoch_metrics(self, metrics: dict, batch_idx: int, max_batches: int):
@@ -57,8 +66,9 @@ class LitBaseModel(L.LightningModule):
         scheduler = ReduceLROnPlateau(
             optimizer,
             mode='min',
-            patience=2,
-            min_lr=1e-6,
+            factor=self.lr_factor,
+            patience=self.lr_patience,
+            min_lr=self.min_lr,
         )
 
         val_frequency = self.trainer.check_val_every_n_epoch
@@ -174,8 +184,16 @@ class LitMixedModelWeightedLoss(LitMixedModel):
             cls_loss_fn: Callable = cross_entropy,
             model_start_lr: float = 1e-3,
             loss_start_lr: float = 1e-2,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
     ):
-        super().__init__(start_lr=model_start_lr)
+        super().__init__(
+            start_lr=model_start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
 
         self.loss = MultiTaskLoss(reg_loss_fn=reg_loss_fn, cls_loss_fn=cls_loss_fn)
         self.loss_start_lr = loss_start_lr
