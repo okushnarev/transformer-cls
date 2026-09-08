@@ -25,6 +25,7 @@ class Transformer(Module):
             num_layers: int = 1,
             activation: str = 'gelu',
             surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+            norm_surf_models: bool = False,
             dim_feedforward: int = 64
     ):
         super().__init__()
@@ -48,6 +49,7 @@ class Transformer(Module):
 
         self.activation = activation
         self.surf_upd_function = surf_upd_function if surf_upd_function else lambda old, new: new.mean(dim=0)
+        self.norm_surf_models = norm_surf_models
 
         if self.in_mlp_hidden_dims:
             self.in_proj = build_mlp(self.input_dim, self.in_mlp_hidden_dims, d_model, self.dropout)
@@ -88,9 +90,12 @@ class Transformer(Module):
             activation=self.activation,
         )
 
+        decoder_norm = nn.LayerNorm(self.d_model, eps=self.layer_norm_eps,
+                                    bias=self.bias) if self.norm_surf_models else None
         self.surf_models_decoder = TransformerDecoder(
             in_decoder_layer,
             num_layers=self.num_layers,
+            norm=decoder_norm,
         )
         init_weights(self.surf_models_decoder)
 
@@ -178,6 +183,7 @@ class LitTransformer(LitMixedModel):
             activation: str = 'gelu',
             dim_feedforward: int = 64,
             surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+            norm_surf_models: bool = False,
             start_lr: float = 1e-3,
             min_lr: float = 1e-6,
             lr_patience: int = 2,
@@ -201,6 +207,7 @@ class LitTransformer(LitMixedModel):
             num_layers=num_layers,
             activation=activation,
             surf_upd_function=surf_upd_function,
+            norm_surf_models=norm_surf_models,
             dim_feedforward=dim_feedforward,
         )
         self.model = torch.compile(model)
@@ -223,6 +230,7 @@ class LitTransformerWeightedLoss(LitMixedModelWeightedLoss):
             num_layers: int = 1,
             activation: str = 'gelu',
             surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+            norm_surf_models: bool = False,
             dim_feedforward: int = 64,
             reg_loss_fn: Callable = mse_loss,
             cls_loss_fn: Callable = cross_entropy,
@@ -244,6 +252,7 @@ class LitTransformerWeightedLoss(LitMixedModelWeightedLoss):
             num_layers=num_layers,
             activation=activation,
             surf_upd_function=surf_upd_function,
+            norm_surf_models=norm_surf_models,
             dim_feedforward=dim_feedforward,
         )
         model = torch.compile(model)
@@ -274,6 +283,7 @@ class LitTransformerRegression(LitRegressionModel):
             num_layers: int = 1,
             activation: str = 'gelu',
             surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+            norm_surf_models: bool = False,
             dim_feedforward: int = 64,
             start_lr: float = 1e-3,
             min_lr: float = 1e-6,
@@ -298,6 +308,7 @@ class LitTransformerRegression(LitRegressionModel):
             num_layers=num_layers,
             activation=activation,
             surf_upd_function=surf_upd_function,
+            norm_surf_models=norm_surf_models,
             dim_feedforward=dim_feedforward,
         )
         self.model = torch.compile(model)
