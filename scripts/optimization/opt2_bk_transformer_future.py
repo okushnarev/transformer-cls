@@ -15,6 +15,7 @@ project_root = str(Path.cwd())
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+from src.surf_update_strategies import random_surf_upd
 from src.models.transformer import LitTransformerRegression
 from src.datamodules.belyaev_kushnarev import BelyaevKushnarevFutureDataModule
 from src.optimization import optimize
@@ -83,6 +84,7 @@ def main():
 
         hparams = {
             'norm_surf_models':        True,
+            'surf_upd_function':       random_surf_upd,
             'input_dim':               len(args.features),
             'out_dim_reg':             len(args.features),
             'sequence_length':         sequence_length,
