@@ -82,6 +82,7 @@ def main():
         dim_feedforward = 2 ** trial.suggest_int('dim_feedforward_pow', low=4, high=9, log=True)
 
         hparams = {
+            'norm_surf_models':        True,
             'input_dim':               len(args.features),
             'out_dim_reg':             len(args.features),
             'sequence_length':         sequence_length,
