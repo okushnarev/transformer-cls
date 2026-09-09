@@ -22,6 +22,9 @@ def optimize(
         datamodule_class: L.LightningDataModule,
         suggest_hparams: Callable[[optuna.trial.Trial], dict[str, Any]],
         log_dir: Path,
+        storage: str | None = None,
+        study_name: str | None = None,
+        load_if_exists: bool = False,
 
         n_trials=100,
         timeout=600,
@@ -61,7 +64,13 @@ def optimize(
 
     pruner = optuna.pruners.HyperbandPruner()
 
-    study = optuna.create_study(direction='minimize', pruner=pruner)
+    study = optuna.create_study(
+        direction='minimize',
+        pruner=pruner,
+        storage=storage,
+        study_name=study_name,
+        load_if_exists=load_if_exists,
+    )
     study.optimize(
         objective,
         n_trials=n_trials,

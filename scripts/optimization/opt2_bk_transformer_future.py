@@ -25,6 +25,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('--study-dir', type=Path, default=Path('experiments/optimization/default'))
     parser.add_argument('--overwrite', action='store_true', help='Overwrite study folder')
+    parser.add_argument('--resume', action='store_true', help='Continue study from available data')
     parser.add_argument('--batch-size', type=int, default=10000)
     parser.add_argument('--segment-size', type=int, default=150)
     parser.add_argument('--num-workers', type=int, default=2)
@@ -45,18 +46,34 @@ def parse_args():
 def main():
     args = parse_args()
 
+    storage_db = f'sqlite:///{args.study_dir}/my_study.db'
+
     if args.study_dir.exists():
         logging.warning('Directory for this study exists: {}\n'.format(args.study_dir))
         if args.overwrite:
             shutil.rmtree(args.study_dir)
+            args.study_dir.mkdir(parents=True)
+        elif args.resume:
+            if (p := args.study_dir / storage_db.split('/')[-1]).exists():
+                print('Resuming study from {}'.format(p))
+            else:
+                logging.error('No study available at {}\n'
+                              'Cannot resume\n'
+                              'Use different name for the study\n'
+                              'or\n'
+                              'Use --overwrite flag to overwrite the directory'
+                              .format(p))
+                return
         else:
-            logging.warning('Cannot proceed\n'
+            logging.error('Cannot proceed\n'
                             'Use different name for the study\n'
+                            'or\n'
+                            'Use --resume flag to try to resume the study'
                             'or\n'
                             'Use --overwrite flag to overwrite the directory')
             return
-
-    args.study_dir.mkdir(parents=True)
+    else:
+        args.study_dir.mkdir(parents=True)
 
     model_class = LitTransformerRegression
 
@@ -103,6 +120,9 @@ def main():
         suggest_hparams=suggest_params,
         n_trials=args.n_trials,
         timeout=args.timeout,
+        storage=storage_db,
+        study_name=args.study_dir.name,
+        load_if_exists=not args.overwrite,
     )
     best_params = {}
     for param, value in report.best_trial.params.items():
