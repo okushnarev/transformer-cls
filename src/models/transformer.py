@@ -6,7 +6,9 @@ from torch import Tensor
 from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer, TransformerEncoder, TransformerEncoderLayer
 from torch.nn.functional import cross_entropy, mse_loss
 
-from src.models.base_model import LitMixedModel, LitMixedModelWeightedLoss, LitRegressionModel
+from src.loss import cosine_loss
+from src.models.base_model import LitMixedModel, LitMixedModelWeightedLoss, LitRegressionModel, \
+    LitRegressionModelSurfLoss
 from src.models.modules import PositionalEncoding
 from src.models.utils import build_mlp, init_weights
 
@@ -322,3 +324,54 @@ class LitTransformerRegression(LitRegressionModel):
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)[1]
+
+class LitTransformerRegressionSurfModels(LitRegressionModelSurfLoss):
+    def __init__(
+            self,
+            input_dim: int = 6,
+            in_mlp_hidden_dims: list[int] = [],
+            sequence_length: int = 10,
+            out_dim_reg: int = 3,
+            out_reg_mlp_hidden_dims: list[int] = [],
+            d_model: int = 128,
+            n_head: int = 1,
+            num_layers: int = 1,
+            activation: str = 'gelu',
+            surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+            norm_surf_models: bool = False,
+            dim_feedforward: int = 64,
+            reg_loss: Callable = mse_loss,
+            model_loss: Callable = cosine_loss,
+            lambda_div: float = 0.2,
+            start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
+    ):
+        super().__init__(
+            reg_loss=reg_loss,
+            model_loss=model_loss,
+            lambda_div=lambda_div,
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+        model = Transformer(
+            input_dim=input_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            sequence_length=sequence_length,
+            out_dim_reg=out_dim_reg,
+            out_reg_mlp_hidden_dims=out_reg_mlp_hidden_dims,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            activation=activation,
+            surf_upd_function=surf_upd_function,
+            norm_surf_models=norm_surf_models,
+            dim_feedforward=dim_feedforward,
+        )
+        self.model = torch.compile(model)
+
+    def forward(self, x: Tensor, out_models: bool = False) -> Tensor:
+        return self.model(x, out_models=out_models)[1:]
