@@ -128,7 +128,11 @@ class Transformer(Module):
             self.reg_ffn = nn.Linear(self.d_model * self.sequence_length, out_dim_reg)
         self.cls_ffn = nn.Linear(self.sequence_length, 1)
 
-    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(
+            self,
+            x: Tensor,
+            out_models: bool = False
+    ) -> tuple[Tensor, Tensor] | tuple[Tensor, Tensor, Tensor]:
         batch_size = x.size(0)
 
         x = self.in_proj(x)
@@ -165,7 +169,10 @@ class Transformer(Module):
         cls_out = self.cls_ffn(ca_weights.permute(0, 2, 1)).squeeze()
         reg_out = self.reg_ffn(ca_out.flatten(start_dim=1))
 
-        return cls_out, reg_out
+        if out_models:
+            return cls_out, reg_out, decoder_out
+        else:
+            return cls_out, reg_out
 
 
 class LitTransformer(LitMixedModel):
