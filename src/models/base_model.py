@@ -7,6 +7,7 @@ from torch.nn.functional import cross_entropy, mse_loss, softmax
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
+from src.loss import cosine_loss
 from src.models.utils import MultiTaskLoss
 
 
@@ -132,6 +133,54 @@ class LitRegressionModel(LitBaseModel):
         loss = mse_loss(outputs, y.squeeze())
         self.log_step_and_epoch_metric('reg/val_loss', loss, batch_idx, stage='val')
         self.log_step_and_epoch_metric('overall/val_loss', loss, batch_idx, stage='val')
+
+
+class LitRegressionModelSurfLoss(LitRegressionModel):
+    def __init__(
+            self,
+            reg_loss: Callable = mse_loss,
+            model_loss: Callable = cosine_loss,
+            lambda_div: float = 0.2,
+            start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,  # in eval epochs
+            lr_factor: float = 0.1,
+    ):
+        super().__init__(
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+
+        self.reg_loss = reg_loss
+        self.model_loss = model_loss
+        self.lambda_div = lambda_div
+
+    def training_step(self, batch, batch_idx):
+        X, y = batch
+        outputs, models = self(X, out_models=True)
+        reg_loss = self.reg_loss(outputs, y.squeeze())
+        self.log_step_and_epoch_metric('reg/train_loss', reg_loss, batch_idx)
+
+        model_loss = self.model_loss(models)
+        self.log_step_and_epoch_metric('model/train_loss', model_loss, batch_idx)
+
+        overall_loss = reg_loss + self.lambda_div * model_loss
+        self.log_step_and_epoch_metric('overall/train_loss', overall_loss, batch_idx)
+        return reg_loss
+
+    def validation_step(self, batch, batch_idx):
+        X, y = batch
+        outputs, models = self(X, out_models=True)
+        reg_loss = self.reg_loss(outputs, y.squeeze())
+        self.log_step_and_epoch_metric('reg/val_loss', reg_loss, batch_idx, stage='val')
+
+        model_loss = self.model_loss(models)
+        self.log_step_and_epoch_metric('model/val_loss', model_loss, batch_idx, stage='val')
+
+        overall_loss = reg_loss + self.lambda_div * model_loss
+        self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
 
 
 class LitMixedModel(LitBaseModel):
