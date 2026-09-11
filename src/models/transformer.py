@@ -56,8 +56,7 @@ class Transformer(Module):
         else:
             self.in_proj = nn.Linear(self.input_dim, d_model)
 
-        surf_models = torch.rand(out_dim_cls, d_model)
-        self.register_buffer('surf_models', surf_models)
+        self.surf_models = nn.Parameter(torch.rand(out_dim_cls, d_model))
 
         self.pos_encoder = PositionalEncoding(
             d_model=self.d_model,
@@ -140,9 +139,6 @@ class Transformer(Module):
             batched_surf_models,
             encoder_out
         )
-
-        new_surf_models = decoder_out.detach()
-        self.surf_models = self.surf_upd_function(self.surf_models, new_surf_models)
 
         if self.norm_first:
             ca_out, ca_weights = self.cross_attn(
