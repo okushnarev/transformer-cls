@@ -58,7 +58,8 @@ class Transformer(Module):
         else:
             self.in_proj = nn.Linear(self.input_dim, d_model)
 
-        surf_models = torch.rand(out_dim_cls, d_model)
+        surf_models = torch.empty(out_dim_cls, d_model)
+        nn.init.orthogonal_(surf_models)
         self.register_buffer('surf_models', surf_models)
 
         self.pos_encoder = PositionalEncoding(
