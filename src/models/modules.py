@@ -2,7 +2,8 @@ import math
 
 import torch
 from torch import Tensor
-from torch.nn import Module, TransformerDecoderLayer
+from torch.nn import Module, TransformerDecoderLayer, TransformerDecoder
+from torch.nn.modules.transformer import _get_seq_len, _detect_is_causal_mask
 
 
 class PositionalEncoding(Module):
@@ -127,3 +128,85 @@ class VerboseTransformerDecoderLayer(TransformerDecoderLayer):
             need_weights=need_weights,
         )
         return self.dropout2(x[0]), x[1]
+
+
+class VerboseTransformerDecoder(TransformerDecoder):
+    def forward(
+            self,
+            tgt: Tensor,
+            memory: Tensor,
+            tgt_mask: Tensor | None = None,
+            memory_mask: Tensor | None = None,
+            tgt_key_padding_mask: Tensor | None = None,
+            memory_key_padding_mask: Tensor | None = None,
+            tgt_is_causal: bool | None = None,
+            memory_is_causal: bool = False,
+            need_weights: bool = False,
+
+    ) -> Tensor | tuple[Tensor, Tensor, Tensor]:
+        r"""Pass the inputs (and mask) through the decoder layer in turn.
+
+        Args:
+            tgt: the sequence to the decoder (required).
+            memory: the sequence from the last layer of the encoder (required).
+            tgt_mask: the mask for the tgt sequence (optional).
+            memory_mask: the mask for the memory sequence (optional).
+            tgt_key_padding_mask: the mask for the tgt keys per batch (optional).
+            memory_key_padding_mask: the mask for the memory keys per batch (optional).
+            tgt_is_causal: If specified, applies a causal mask as ``tgt mask``.
+                Default: ``None``; try to detect a causal mask.
+                Warning:
+                ``tgt_is_causal`` provides a hint that ``tgt_mask`` is
+                the causal mask. Providing incorrect hints can result in
+                incorrect execution, including forward and backward
+                compatibility.
+            memory_is_causal: If specified, applies a causal mask as
+                ``memory mask``.
+                Default: ``False``.
+                Warning:
+                ``memory_is_causal`` provides a hint that
+                ``memory_mask`` is the causal mask. Providing incorrect
+                hints can result in incorrect execution, including
+                forward and backward compatibility.
+            need_weights: If specified, outputs self-attention and cross attention weights
+
+        Shape:
+            see the docs in :class:`~torch.nn.Transformer`.
+        """
+        output = tgt
+
+        seq_len = _get_seq_len(tgt, self.layers[0].self_attn.batch_first)
+        tgt_is_causal = _detect_is_causal_mask(tgt_mask, tgt_is_causal, seq_len)
+
+        for idx, mod in enumerate(self.layers):
+            if need_weights and (idx == len(self.layers - 1)):
+                output, sa_weights, ca_weights = mod(
+                    output,
+                    memory,
+                    tgt_mask=tgt_mask,
+                    memory_mask=memory_mask,
+                    tgt_key_padding_mask=tgt_key_padding_mask,
+                    memory_key_padding_mask=memory_key_padding_mask,
+                    tgt_is_causal=tgt_is_causal,
+                    memory_is_causal=memory_is_causal,
+                    need_weights=need_weights,
+                )
+            else:
+                output = mod(
+                    output,
+                    memory,
+                    tgt_mask=tgt_mask,
+                    memory_mask=memory_mask,
+                    tgt_key_padding_mask=tgt_key_padding_mask,
+                    memory_key_padding_mask=memory_key_padding_mask,
+                    tgt_is_causal=tgt_is_causal,
+                    memory_is_causal=memory_is_causal,
+                )
+
+        if self.norm is not None:
+            output = self.norm(output)
+
+        if need_weights:
+            return output, sa_weights, ca_weights
+
+        return output
