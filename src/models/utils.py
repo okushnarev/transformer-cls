@@ -1,7 +1,8 @@
-from typing import Callable
-from torch.nn.functional import cross_entropy, mse_loss
+from typing import Callable, NamedTuple
+
 import torch
-from torch import nn
+from torch import Tensor, nn
+from torch.nn.functional import cross_entropy, mse_loss
 
 
 def init_weights(component):
@@ -34,6 +35,14 @@ def build_mlp(
         current_dim = dim
     layers.append(nn.Linear(current_dim, output_dim))
     return nn.Sequential(*layers)
+
+
+class VerboseModelOutput(NamedTuple):
+    cls_out: Tensor | None = None
+    reg_out: Tensor | None = None
+    decoder_out: Tensor | None = None
+    decoder_sa_weights: Tensor | None = None
+    decoder_ca_weights: Tensor | None = None
 
 
 class MultiTaskLoss(nn.Module):
