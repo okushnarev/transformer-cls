@@ -7,7 +7,8 @@ from torch.nn.functional import cross_entropy, mse_loss, softmax
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from src.loss import cosine_loss
+from src.helpers import get_callable_name
+from src.loss import cosine_loss, div_attn_loss, sharp_attn_loss
 from src.models.utils import MultiTaskLoss
 
 
@@ -180,6 +181,75 @@ class LitRegressionModelSurfLoss(LitRegressionModel):
         self.log_step_and_epoch_metric('model/val_loss', model_loss, batch_idx, stage='val')
 
         overall_loss = reg_loss + self.lambda_div * model_loss
+        self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
+
+
+class LitRegressionSelfAttnLoss(LitRegressionModel):
+    def __init__(
+            self,
+            reg_loss: Callable = mse_loss,
+            sa_loss: Callable | list[Callable] = [sharp_attn_loss, div_attn_loss],
+            sa_loss_weight: float | list[float] = 0.2,
+            start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,  # in eval epochs
+            lr_factor: float = 0.1,
+    ):
+        super().__init__(
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+
+        self.reg_loss = reg_loss
+
+        if not isinstance(sa_loss, list):
+            if not isinstance(sa_loss_weight, Callable):
+                raise TypeError('Loss should be of type Callable. Now: {}'.format(type(sa_loss)))
+            sa_loss = [sa_loss]
+        self.sa_loss: list[Callable] = sa_loss
+
+        if not isinstance(sa_loss_weight, list):
+            if not isinstance(sa_loss_weight, float):
+                raise TypeError('Coefficients should be of type float. Now: {}'.format(type(sa_loss_weight)))
+            sa_loss_weight = [sa_loss_weight] * len(self.sa_loss)
+        elif len(sa_loss_weight) != len(sa_loss):
+            raise ValueError('Number of coefficients should be the same as number of losses. '
+                             'Now sa_loss_coeff ({}) and sa_loss ({})'.format(len(sa_loss_weight), len(sa_loss)))
+        self.sa_loss_weight: list[float] = sa_loss_weight
+
+    def training_step(self, batch, batch_idx):
+        X, y = batch
+        outputs, sa_weights = self(X)
+        reg_loss = self.reg_loss(outputs, y.squeeze())
+        self.log_step_and_epoch_metric('reg/train_loss', reg_loss, batch_idx)
+
+        sa_losses = []
+        for _loss_fn in self.sa_loss:
+            _loss = _loss_fn(sa_weights)
+            _loss_name = get_callable_name(_loss_fn).replace('_loss', '')
+            self.log_step_and_epoch_metric(f'self_attn/{_loss_name}/train_loss', _loss, batch_idx)
+            sa_losses.append(_loss)
+
+        overall_loss = reg_loss + sum((l * w for l, w in zip(sa_losses, self.sa_loss_weight)))
+        self.log_step_and_epoch_metric('overall/train_loss', overall_loss, batch_idx)
+        return reg_loss
+
+    def validation_step(self, batch, batch_idx):
+        X, y = batch
+        outputs, sa_weights = self(X)
+        reg_loss = self.reg_loss(outputs, y.squeeze())
+        self.log_step_and_epoch_metric('reg/val_loss', reg_loss, batch_idx, stage='val')
+
+        sa_losses = []
+        for _loss_fn in self.sa_loss:
+            _loss = _loss_fn(sa_weights)
+            _loss_name = get_callable_name(_loss_fn).replace('_loss', '')
+            self.log_step_and_epoch_metric(f'self_attn/{_loss_name}/val_loss', _loss, batch_idx, stage='val')
+            sa_losses.append(_loss)
+
+        overall_loss = reg_loss + sum((l * w for l, w in zip(sa_losses, self.sa_loss_weight)))
         self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
 
 
