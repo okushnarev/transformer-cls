@@ -7,8 +7,9 @@ from torch.nn.functional import cross_entropy, mse_loss, softmax
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from src.loss import cosine_loss
-from src.models.utils import MultiTaskLoss
+from src.helpers import get_callable_name
+from src.loss import cosine_loss, div_attn_loss, sharp_attn_loss
+from src.models.utils import LossTerm, MultiTaskLoss, VerboseModelOutput
 
 
 class LitBaseModel(L.LightningModule):
@@ -182,6 +183,150 @@ class LitRegressionModelSurfLoss(LitRegressionModel):
         overall_loss = reg_loss + self.lambda_div * model_loss
         self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
 
+
+class LitRegressionSelfAttnLoss(LitRegressionModel):
+    def __init__(
+            self,
+            reg_loss: Callable = mse_loss,
+            sa_loss: Callable | list[Callable] = [sharp_attn_loss, div_attn_loss],
+            sa_loss_weight: float | list[float] = 0.2,
+            start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,  # in eval epochs
+            lr_factor: float = 0.1,
+    ):
+        super().__init__(
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+
+        self.reg_loss = reg_loss
+
+        if not isinstance(sa_loss, list):
+            sa_loss = [sa_loss]
+        self.sa_loss: list[Callable] = sa_loss
+
+        if not isinstance(sa_loss_weight, list):
+            if not isinstance(sa_loss_weight, float):
+                raise TypeError('Coefficients should be of type float. Now: {}'.format(type(sa_loss_weight)))
+            sa_loss_weight = [sa_loss_weight] * len(self.sa_loss)
+        elif len(sa_loss_weight) != len(sa_loss):
+            raise ValueError('Number of coefficients should be the same as number of losses. '
+                             'Now sa_loss_coeff ({}) and sa_loss ({})'.format(len(sa_loss_weight), len(sa_loss)))
+        self.sa_loss_weight: list[float] = sa_loss_weight
+
+    def training_step(self, batch, batch_idx):
+        X, y = batch
+        outputs, sa_weights = self(X)
+        reg_loss = self.reg_loss(outputs, y.squeeze())
+        self.log_step_and_epoch_metric('reg/train_loss', reg_loss, batch_idx)
+
+        sa_losses = []
+        for _loss_fn in self.sa_loss:
+            _loss = _loss_fn(sa_weights)
+            _loss_name = get_callable_name(_loss_fn).replace('_loss', '')
+            self.log_step_and_epoch_metric(f'self_attn/{_loss_name}/train_loss', _loss, batch_idx)
+            sa_losses.append(_loss)
+
+        overall_loss = reg_loss + sum((l * w for l, w in zip(sa_losses, self.sa_loss_weight)))
+        self.log_step_and_epoch_metric('overall/train_loss', overall_loss, batch_idx)
+        return reg_loss
+
+    def validation_step(self, batch, batch_idx):
+        X, y = batch
+        outputs, sa_weights = self(X)
+        reg_loss = self.reg_loss(outputs, y.squeeze())
+        self.log_step_and_epoch_metric('reg/val_loss', reg_loss, batch_idx, stage='val')
+
+        sa_losses = []
+        for _loss_fn in self.sa_loss:
+            _loss = _loss_fn(sa_weights)
+            _loss_name = get_callable_name(_loss_fn).replace('_loss', '')
+            self.log_step_and_epoch_metric(f'self_attn/{_loss_name}/val_loss', _loss, batch_idx, stage='val')
+            sa_losses.append(_loss)
+
+        overall_loss = reg_loss + sum((l * w for l, w in zip(sa_losses, self.sa_loss_weight)))
+        self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
+
+
+class LitRegressionAttentionLoss(LitRegressionModel):
+    def __init__(
+        self,
+        reg_loss: Callable = mse_loss,
+        attention_losses: dict[str, list[LossTerm]] | None = None,
+        start_lr: float = 1e-3,
+        min_lr: float = 1e-6,
+        lr_patience: int = 2,
+        lr_factor: float = 0.1,
+    ):
+        super().__init__(
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+
+        self.reg_loss = reg_loss
+        self.attention_losses = attention_losses or {}
+
+    def _step(self, batch: object, batch_idx: object, stage: object) -> object:
+        X, y = batch
+
+        model_output: VerboseModelOutput = self(X)
+
+        reg_loss = self.reg_loss(
+            model_output.reg_out,
+            y.squeeze(),
+        )
+
+        self.log_step_and_epoch_metric(
+            f'reg/{stage}_loss',
+            reg_loss,
+            batch_idx,
+            stage=stage,
+        )
+
+        overall_loss = reg_loss
+
+        for attention_name, loss_terms in self.attention_losses.items():
+            attention = getattr(model_output, attention_name)
+
+            if attention is None:
+                raise ValueError(
+                    f'Attention \'{attention_name}\' is None, '
+                    'but losses were configured for it.'
+                )
+
+            for term in loss_terms:
+                loss = term.fn(attention)
+
+                loss_name = get_callable_name(term.fn).replace('_loss', '')
+
+                self.log_step_and_epoch_metric(
+                    f'{attention_name}/{loss_name}/{stage}_loss',
+                    loss,
+                    batch_idx,
+                    stage=stage,
+                )
+
+                overall_loss = overall_loss + term.weight * loss
+
+        self.log_step_and_epoch_metric(
+            f'overall/{stage}_loss',
+            overall_loss,
+            batch_idx,
+            stage=stage,
+        )
+
+        return overall_loss
+
+    def training_step(self, batch, batch_idx):
+        return self._step(batch, batch_idx, 'train')
+
+    def validation_step(self, batch, batch_idx):
+        self._step(batch, batch_idx, 'val')
 
 class LitMixedModel(LitBaseModel):
     def training_step(self, batch, batch_idx):
