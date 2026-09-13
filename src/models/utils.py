@@ -1,4 +1,5 @@
-from typing import Callable, NamedTuple
+from dataclasses import dataclass
+from typing import Callable
 
 import torch
 from torch import Tensor, nn
@@ -37,7 +38,8 @@ def build_mlp(
     return nn.Sequential(*layers)
 
 
-class VerboseModelOutput(NamedTuple):
+@dataclass(frozen=True)
+class VerboseModelOutput:
     cls_out: Tensor | None = None
     reg_out: Tensor | None = None
     decoder_out: Tensor | None = None
