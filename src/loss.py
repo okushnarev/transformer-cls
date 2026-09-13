@@ -76,3 +76,8 @@ def div_attn_loss(
     ).sum(dim=-1).mean()
 
     return div_loss
+
+def eye_loss(in_data: torch.Tensor) -> torch.Tensor:
+    keys_sz = in_data.size(-1)
+    tgt = torch.eye(keys_sz)
+    return (tgt - in_data).square().mean()
