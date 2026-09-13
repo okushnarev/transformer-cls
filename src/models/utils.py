@@ -42,6 +42,10 @@ def build_mlp(
 class VerboseModelOutput:
     cls_out: Tensor | None = None
     reg_out: Tensor | None = None
+
+
+@dataclass(frozen=True)
+class VerboseModelOutputDecoder(VerboseModelOutput):
     decoder_out: Tensor | None = None
     decoder_self_attn: Tensor | None = None
     decoder_cross_attn: Tensor | None = None
