@@ -6,10 +6,10 @@ from torch import Tensor
 from torch.nn.functional import mse_loss
 
 from src.loss import div_attn_loss, sharp_attn_loss
-from src.models.base_model import LitRegressionModel, LitRegressionSelfAttnLoss
+from src.models.base_model import LitRegressionAttentionLoss, LitRegressionModel, LitRegressionSelfAttnLoss
 from src.models.modules import VerboseTransformerDecoder, VerboseTransformerDecoderLayer
 from src.models.transformer import Transformer
-from src.models.utils import VerboseModelOutput, VerboseModelOutputDecoder, init_weights
+from src.models.utils import LossTerm, VerboseModelOutput, VerboseModelOutputDecoder, init_weights
 
 
 class VerboseTransformer(Transformer):
@@ -217,3 +217,55 @@ class LitVerboseTransformerRegSelfAttn(LitRegressionSelfAttnLoss):
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         output: VerboseModelOutputDecoder = self.model(x, out_dec_weights=True)
         return output.reg_out, output.decoder_self_attn
+
+
+class LitVerboseTransformerRegAttn(LitRegressionAttentionLoss):
+    def __init__(
+            self,
+            input_dim: int = 6,
+            in_mlp_hidden_dims: list[int] = [],
+            sequence_length: int = 10,
+            out_dim_cls: int = 4,
+            out_dim_reg: int = 3,
+            out_reg_mlp_hidden_dims: list[int] = [],
+            d_model: int = 128,
+            n_head: int = 1,
+            num_layers: int = 1,
+            activation: str = 'gelu',
+            surf_upd_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+            norm_surf_models: bool = False,
+            dim_feedforward: int = 64,
+            reg_loss: Callable = mse_loss,
+            attention_losses: dict[str, list[LossTerm]] | None = None,
+            start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
+    ):
+        super().__init__(
+            reg_loss=reg_loss,
+            start_lr=start_lr,
+            attention_losses=attention_losses,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+        model = VerboseTransformer(
+            input_dim=input_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            sequence_length=sequence_length,
+            out_dim_cls=out_dim_cls,
+            out_dim_reg=out_dim_reg,
+            out_reg_mlp_hidden_dims=out_reg_mlp_hidden_dims,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            activation=activation,
+            surf_upd_function=surf_upd_function,
+            norm_surf_models=norm_surf_models,
+            dim_feedforward=dim_feedforward,
+        )
+        self.model = torch.compile(model)
+
+    def forward(self, x: Tensor) -> VerboseModelOutputDecoder:
+        return self.model(x, out_dec_weights=True)
