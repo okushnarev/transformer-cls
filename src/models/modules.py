@@ -176,7 +176,7 @@ class VerboseTransformerDecoder(TransformerDecoder):
         tgt_is_causal = _detect_is_causal_mask(tgt_mask, tgt_is_causal, seq_len)
 
         for idx, mod in enumerate(self.layers):
-            if need_weights and (idx == len(self.layers - 1)):
+            if (idx == len(self.layers - 1)):
                 output, sa_weights, ca_weights = mod(
                     output,
                     memory,
@@ -203,7 +203,4 @@ class VerboseTransformerDecoder(TransformerDecoder):
         if self.norm is not None:
             output = self.norm(output)
 
-        if need_weights:
-            return output, sa_weights, ca_weights
-
-        return output
+        return output, sa_weights, ca_weights
