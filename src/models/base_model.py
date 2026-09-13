@@ -205,8 +205,6 @@ class LitRegressionSelfAttnLoss(LitRegressionModel):
         self.reg_loss = reg_loss
 
         if not isinstance(sa_loss, list):
-            if not isinstance(sa_loss_weight, Callable):
-                raise TypeError('Loss should be of type Callable. Now: {}'.format(type(sa_loss)))
             sa_loss = [sa_loss]
         self.sa_loss: list[Callable] = sa_loss
 
