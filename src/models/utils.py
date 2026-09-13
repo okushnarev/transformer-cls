@@ -41,8 +41,8 @@ class VerboseModelOutput(NamedTuple):
     cls_out: Tensor | None = None
     reg_out: Tensor | None = None
     decoder_out: Tensor | None = None
-    decoder_sa_weights: Tensor | None = None
-    decoder_ca_weights: Tensor | None = None
+    decoder_self_attn: Tensor | None = None
+    decoder_cross_attn: Tensor | None = None
 
 
 class MultiTaskLoss(nn.Module):

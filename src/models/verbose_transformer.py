@@ -111,8 +111,8 @@ class VerboseTransformer(Transformer):
             cls_out=cls_out,
             reg_out=reg_out,
             decoder_out=decoder_out if out_models else None,
-            decoder_sa_weights=dec_sa_weights,
-            decoder_ca_weights=dec_ca_weights,
+            decoder_self_attn=dec_sa_weights,
+            decoder_cross_attn=dec_ca_weights,
         )
 
 
