@@ -373,5 +373,5 @@ class LitTransformerRegressionSurfModels(LitRegressionModelSurfLoss):
         )
         self.model = torch.compile(model)
 
-    def forward(self, x: Tensor, out_models: bool = False) -> Tensor:
-        return self.model(x, out_models=out_models)[1:]
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
+        return self.model(x, out_models=True)[1:]

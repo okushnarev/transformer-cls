@@ -159,7 +159,7 @@ class LitRegressionModelSurfLoss(LitRegressionModel):
 
     def training_step(self, batch, batch_idx):
         X, y = batch
-        outputs, models = self(X, out_models=True)
+        outputs, models = self(X)
         reg_loss = self.reg_loss(outputs, y.squeeze())
         self.log_step_and_epoch_metric('reg/train_loss', reg_loss, batch_idx)
 
@@ -172,7 +172,7 @@ class LitRegressionModelSurfLoss(LitRegressionModel):
 
     def validation_step(self, batch, batch_idx):
         X, y = batch
-        outputs, models = self(X, out_models=True)
+        outputs, models = self(X)
         reg_loss = self.reg_loss(outputs, y.squeeze())
         self.log_step_and_epoch_metric('reg/val_loss', reg_loss, batch_idx, stage='val')
 
