@@ -39,3 +39,16 @@ def cosine_loss(
     loss = excess.square().mean()
 
     return loss
+
+
+def sharp_attn_loss(
+        in_data: torch.Tensor,
+        eps: float = 1e-8,
+) -> torch.Tensor:
+    """
+    Loss used to Concentrate attention distribution
+    :param in_data: Attention tensor [batch, heads, query, key]
+    :param eps: Numerical stability constant
+    """
+    entropy = -(in_data * torch.log(in_data.clamp_min(eps))).sum(dim=-1)
+    return entropy.mean()
