@@ -74,7 +74,7 @@ class VerboseTransformer(Transformer):
         encoder_out = self.in_encoder(x)
 
         batched_surf_models = self.surf_models.unsqueeze(0).expand(batch_size, -1, -1)
-        decoder_out = self.surf_models_decoder(
+        decoder_out, dec_sa_weight, dec_ca_weights = self.surf_models_decoder(
             batched_surf_models,
             encoder_out
         )

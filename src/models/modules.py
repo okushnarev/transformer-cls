@@ -33,7 +33,7 @@ class VerboseTransformerDecoderLayer(TransformerDecoderLayer):
             tgt_is_causal: bool = False,
             memory_is_causal: bool = False,
             need_weights: bool = False,
-    ) -> Tensor | tuple[Tensor, Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor | None, Tensor | None]:
         r"""Pass the inputs (and mask) through the decoder layer.
 
         Args:
@@ -85,10 +85,7 @@ class VerboseTransformerDecoderLayer(TransformerDecoderLayer):
             )
             x = self.norm3(x + self._ff_block(x))
 
-        if need_weights:
-            return x, sa_out[1], mha_out[1]
-
-        return x
+        return x, sa_out[1], mha_out[1]
 
     def _sa_block(
             self,
