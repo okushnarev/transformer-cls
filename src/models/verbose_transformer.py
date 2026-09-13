@@ -65,7 +65,8 @@ class VerboseTransformer(Transformer):
     def forward(
             self,
             x: Tensor,
-            out_models: bool = False
+            out_models: bool = False,
+            out_dec_weights: bool = False,
     ) -> VerboseModelOutput:
         batch_size = x.size(0)
 
@@ -76,7 +77,8 @@ class VerboseTransformer(Transformer):
         batched_surf_models = self.surf_models.unsqueeze(0).expand(batch_size, -1, -1)
         decoder_out, dec_sa_weights, dec_ca_weights = self.surf_models_decoder(
             batched_surf_models,
-            encoder_out
+            encoder_out,
+            need_weights=out_dec_weights,
         )
 
         new_surf_models = decoder_out.detach()
@@ -106,7 +108,9 @@ class VerboseTransformer(Transformer):
         return VerboseModelOutput(
             cls_out=cls_out,
             reg_out=reg_out,
-            decoder_out=decoder_out if out_models else None
+            decoder_out=decoder_out if out_models else None,
+            decoder_sa_weights=dec_sa_weights,
+            decoder_ca_weights=dec_ca_weights,
         )
 
 
