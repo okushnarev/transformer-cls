@@ -51,6 +51,12 @@ class VerboseModelOutputDecoder(VerboseModelOutput):
     decoder_cross_attn: Tensor | None = None
 
 
+@dataclass(frozen=True)
+class LossTerm:
+    fn: Callable
+    weight: float
+
+
 class MultiTaskLoss(nn.Module):
     """
         This class implements the homoscedastic uncertainty weighting approach
