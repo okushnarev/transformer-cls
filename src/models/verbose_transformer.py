@@ -9,7 +9,7 @@ from src.loss import div_attn_loss, sharp_attn_loss
 from src.models.base_model import LitRegressionAttentionLoss, LitRegressionModel, LitRegressionSelfAttnLoss
 from src.models.modules import VerboseTransformerDecoder, VerboseTransformerDecoderLayer
 from src.models.transformer import Transformer
-from src.models.utils import LossTerm, VerboseModelOutput, VerboseModelOutputDecoder, init_weights
+from src.models.utils import LossTerm, VerboseModelOutputDecoder, init_weights
 
 
 class VerboseTransformer(Transformer):
@@ -69,7 +69,7 @@ class VerboseTransformer(Transformer):
             x: Tensor,
             out_models: bool = False,
             out_dec_weights: bool = False,
-    ) -> VerboseModelOutput:
+    ) -> VerboseModelOutputDecoder:
         batch_size = x.size(0)
 
         x = self.in_proj(x)
@@ -107,7 +107,7 @@ class VerboseTransformer(Transformer):
         cls_out = self.cls_ffn(ca_weights.permute(0, 2, 1)).squeeze()
         reg_out = self.reg_ffn(ca_out.flatten(start_dim=1))
 
-        return VerboseModelOutput(
+        return VerboseModelOutputDecoder(
             cls_out=cls_out,
             reg_out=reg_out,
             decoder_out=decoder_out if out_models else None,
@@ -161,7 +161,7 @@ class LitVerboseTransformerRegression(LitRegressionModel):
         self.model = torch.compile(model)
 
     def forward(self, x: Tensor) -> Tensor:
-        output: VerboseModelOutput = self.model(x)
+        output: VerboseModelOutputDecoder = self.model(x)
         return output.reg_out
 
 class LitVerboseTransformerRegSelfAttn(LitRegressionSelfAttnLoss):
