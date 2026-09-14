@@ -18,6 +18,7 @@ class PrototypicalTransformer(nn.Module):
         out_mlp_hidden_dims: list[int],
         n_pred_steps: int,
         n_classes: int,
+        temperature: float,
         d_model: int,
         n_head: int,
         num_layers: int,
@@ -43,6 +44,7 @@ class PrototypicalTransformer(nn.Module):
             :param out_mlp_hidden_dims: Hidden dimensions of the decoder output MLP
             :param n_pred_steps: Number of future states predicted in one forward pass
             :param n_classes: Number of prototype classes
+            :param temperature: Temperature applied to cosine similarities
             :param d_model: Transformer embedding dimension
             :param n_head: Number of attention heads
             :param num_layers: Number of Transformer encoder and decoder layers
@@ -60,10 +62,15 @@ class PrototypicalTransformer(nn.Module):
         self.out_mlp_hidden_dims = out_mlp_hidden_dims
         self.n_pred_steps = n_pred_steps
         self.n_classes = n_classes
+        self.temperature = temperature
         self.d_model = d_model
         self.n_head = n_head
         self.num_layers = num_layers
         self.dim_feedforward = dim_feedforward
+
+        # Checks
+        if self.temperature <= 0:
+            raise ValueError('Temperature must be greater than zero')
 
         self.activation = activation
         self.layer_norm_eps = layer_norm_eps
@@ -230,7 +237,6 @@ class PrototypicalTransformer(nn.Module):
     def prototype_logits(
         self,
         surface_embedding: torch.Tensor,
-        temperature: float = 0.1,
     ) -> torch.Tensor:
         """Compute cosine-similarity logits against learnable prototypes
 
@@ -239,17 +245,13 @@ class PrototypicalTransformer(nn.Module):
 
         :param surface_embedding: Surface embeddings with shape
             ``(batch, d_model)``
-        :param temperature: Temperature applied to cosine similarities
         :return: Prototype logits with shape ``(batch, n_classes)``
         """
-
-        if temperature <= 0:
-            raise ValueError('Temperature must be greater than zero')
 
         embedding = F.normalize(surface_embedding, dim=-1)
         prototypes = F.normalize(self.prototypes, dim=-1)
 
-        return embedding @ prototypes.transpose(0, 1) / temperature
+        return embedding @ prototypes.transpose(0, 1) / self.temperature
 
 
 class LitPrototypicalTransformer(LitMixedLossModel):
@@ -261,6 +263,7 @@ class LitPrototypicalTransformer(LitMixedLossModel):
         out_mlp_hidden_dims: list[int],
         n_pred_steps: int,
         n_classes: int,
+        temperature: float,
         d_model: int,
         n_head: int,
         num_layers: int,
@@ -294,6 +297,7 @@ class LitPrototypicalTransformer(LitMixedLossModel):
             out_mlp_hidden_dims=out_mlp_hidden_dims,
             n_pred_steps=n_pred_steps,
             n_classes=n_classes,
+            temperature=temperature,
             d_model=d_model,
             n_head=n_head,
             num_layers=num_layers,
