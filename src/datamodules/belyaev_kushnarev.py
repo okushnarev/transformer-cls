@@ -1,8 +1,12 @@
 from typing import Literal, Optional
 
 import pandas as pd
+import torch
 from pandas import DataFrame
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import TensorDataset
 
+from src.data_processing import create_sequences
 from src.datamodules.base import BaseDataModule
 
 
@@ -79,7 +83,6 @@ class BelyaevKushnarevFutureDataModule(BelyaevKushnarevDataModule):
             seed=seed,
         )
 
-
     def apply_transforms(self) -> DataFrame:
         df = super().apply_transforms()
         df_next = df[self.features].copy()
@@ -92,3 +95,86 @@ class BelyaevKushnarevFutureDataModule(BelyaevKushnarevDataModule):
         for df in (self.df, self.df_train, self.df_test, self.df_val):
             df[self.reg_targets] = df.groupby(self.group_cols)[self.reg_targets].shift(-1)
             df.dropna(inplace=True)
+
+
+class BKFutureDataModuleWithActions(BelyaevKushnarevFutureDataModule):
+    def __init__(
+            self,
+            features: list[str],
+            actions: list[str],
+            mode: Literal['reg', 'cls+reg'],
+            info_cols: Optional[list[str]],
+            segment_size: int,
+            sequence_length: int,
+            test_size: float,
+            val_size: float,
+            batch_size: int,
+            num_workers: int,
+            pin_memory: bool,
+            seed: int,
+    ):
+        super().__init__(
+            features=features,
+            mode=mode,
+            info_cols=info_cols,
+            segment_size=segment_size,
+            sequence_length=sequence_length,
+            test_size=test_size,
+            val_size=val_size,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            seed=seed,
+        )
+
+        self.actions = actions
+        self._all_cols = list(set(
+            self._all_cols
+            + self.actions
+        ))
+
+    def setup(self, stage: str):
+        super().setup(stage)
+        self.actions_scaler = StandardScaler()
+        self._transform_cols(self.actions_scaler, self.actions)
+
+    def _prep_dataset(self, df) -> TensorDataset:
+        orig_dataset = super()._prep_dataset(df)
+        tensors = orig_dataset.tensors
+
+        X_features = torch.tensor(
+            create_sequences(
+                df,
+                group_by=self.group_cols,
+                cols=self.features,
+                length=self.sequence_length,
+                mode='full'
+            ),
+            dtype=torch.float
+        )
+
+        X_actions = torch.tensor(
+            create_sequences(
+                df,
+                group_by=self.group_cols,
+                cols=self.actions,
+                length=self.sequence_length,
+                mode='full'
+            ),
+            dtype=torch.float
+        )
+
+        X_info = torch.tensor(
+            create_sequences(
+                df,
+                group_by=self.group_cols,
+                cols=self.info_cols,
+                length=self.sequence_length,
+                mode='full'
+            ),
+            dtype=torch.float
+        ) if self.info_cols else None
+
+        if self.info_cols:
+            return TensorDataset(X_features, X_actions, X_info, *tensors[1:])
+        return TensorDataset(X_features, X_actions, *tensors[1:])
