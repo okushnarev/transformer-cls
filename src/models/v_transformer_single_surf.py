@@ -114,7 +114,7 @@ class LitVTransformerSingleSurfUpdRegAttn(LitRegressionAttentionLoss):
             norm_surf_models=norm_surf_models,
             dim_feedforward=dim_feedforward,
         )
-        self.model = torch.compile(model, disable=True)
+        self.model = torch.compile(model)
 
     def forward(self, x: Tensor) -> VerboseModelOutputDecoder:
         return self.model(x, out_dec_weights=True)
