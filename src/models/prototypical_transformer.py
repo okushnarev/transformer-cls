@@ -260,7 +260,7 @@ class PrototypicalTransformer(nn.Module):
 class LitPrototypicalTransformer(LitMixedLossModel):
     def __init__(
             self,
-            input_dim: int,
+            in_dim: int,
             output_dim: int,
             in_mlp_hidden_dims: list[int],
             out_mlp_hidden_dims: list[int],
@@ -294,7 +294,7 @@ class LitPrototypicalTransformer(LitMixedLossModel):
         )
 
         model = PrototypicalTransformer(
-            input_dim=input_dim,
+            input_dim=in_dim,
             output_dim=output_dim,
             in_mlp_hidden_dims=in_mlp_hidden_dims,
             out_mlp_hidden_dims=out_mlp_hidden_dims,
