@@ -314,4 +314,4 @@ class LitPrototypicalTransformer(LitMixedLossModel):
         self.model = torch.compile(model)
 
     def forward(self, *args: Any, **kwargs: Any) -> Any:
-        self.model(*args, **kwargs)
+        return self.model(*args, **kwargs)
