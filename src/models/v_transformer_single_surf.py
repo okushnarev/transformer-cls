@@ -68,7 +68,7 @@ class VTransformeSingleSurfUpd(VerboseTransformer):
             decoder_cross_attn=dec_ca_weights,
         )
 
-class LitVTransformerSingleSurfUpdRegAttn(LitMixedLossModel):
+class LitVTransformerSingleSurfUpd(LitMixedLossModel):
     def __init__(
             self,
             input_dim: int = 6,
@@ -84,7 +84,8 @@ class LitVTransformerSingleSurfUpdRegAttn(LitMixedLossModel):
             surf_upd_function: Callable[[Tensor, Tensor], Tensor] | None = None,
             norm_surf_models: bool = False,
             dim_feedforward: int = 64,
-            reg_loss: Callable = mse_loss,
+            reg_loss: Callable | None = mse_loss,
+            cls_loss: Callable | None = None,
             attention_losses: dict[str, list[LossTerm]] | None = None,
             start_lr: float = 1e-3,
             min_lr: float = 1e-6,
@@ -93,6 +94,7 @@ class LitVTransformerSingleSurfUpdRegAttn(LitMixedLossModel):
     ):
         super().__init__(
             reg_loss=reg_loss,
+            cls_loss=cls_loss,
             start_lr=start_lr,
             attention_losses=attention_losses,
             min_lr=min_lr,
