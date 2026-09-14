@@ -1,10 +1,12 @@
+from typing import Any, Callable
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from src.models.base_model import LitMixedLossModel
 from src.models.modules import PositionalEncoding
-from src.models.utils import build_mlp, init_weights
+from src.models.utils import LossTerm, build_mlp, init_weights
 
 
 class PrototypicalTransformer(nn.Module):
@@ -263,15 +265,46 @@ class LitPrototypicalTransformer(LitMixedLossModel):
         n_head: int,
         num_layers: int,
         dim_feedforward: int,
-        activation: str = 'gelu',
-        layer_norm_eps: float = 1e-5,
-        dropout: float = 0.1,
-        decoder_causal: bool = False,
-        reg_loss: Callable | LossTerm | None = LossTerm(mse_loss, 1),
-        cls_loss: Callable | LossTerm | None = None,
-        additional_losses: dict[str, list[LossTerm]] | None = None,
-        start_lr: float = 1e-3,
-        min_lr: float = 1e-6,
-        lr_patience: int = 2,
-        lr_factor: float = 0.1,
+        activation: str,
+        layer_norm_eps: float,
+        dropout: float,
+        decoder_causal: bool,
+        reg_loss: Callable | LossTerm | None,
+        cls_loss: Callable | LossTerm | None,
+        additional_losses: dict[str, list[LossTerm]] | None,
+        start_lr: float,
+        min_lr: float,
+        lr_patience: int,
+        lr_factor: float,
                  ):
+        super().__init__(
+            reg_loss=reg_loss,
+            cls_loss=cls_loss,
+            additional_losses=additional_losses,
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+
+        model = PrototypicalTransformer(
+            input_dim=input_dim,
+            output_dim=output_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            out_mlp_hidden_dims=out_mlp_hidden_dims,
+            n_pred_steps=n_pred_steps,
+            n_classes=n_classes,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            dim_feedforward=dim_feedforward,
+            activation=activation,
+            layer_norm_eps=layer_norm_eps,
+            dropout=dropout,
+            decoder_causal=decoder_causal,
+        )
+
+        self.model = torch.compile(model)
+
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        self.model(*args, **kwargs)
