@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from src.models.base_model import LitMixedLossModel
 from src.models.modules import PositionalEncoding
 from src.models.utils import build_mlp, init_weights
 
@@ -247,3 +248,30 @@ class PrototypicalTransformer(nn.Module):
         prototypes = F.normalize(self.prototypes, dim=-1)
 
         return embedding @ prototypes.transpose(0, 1) / temperature
+
+
+class LitPrototypicalTransformer(LitMixedLossModel):
+    def __init__(
+            self,
+        input_dim: int,
+        output_dim: int,
+        in_mlp_hidden_dims: list[int],
+        out_mlp_hidden_dims: list[int],
+        n_pred_steps: int,
+        n_classes: int,
+        d_model: int,
+        n_head: int,
+        num_layers: int,
+        dim_feedforward: int,
+        activation: str = 'gelu',
+        layer_norm_eps: float = 1e-5,
+        dropout: float = 0.1,
+        decoder_causal: bool = False,
+        reg_loss: Callable | LossTerm | None = LossTerm(mse_loss, 1),
+        cls_loss: Callable | LossTerm | None = None,
+        additional_losses: dict[str, list[LossTerm]] | None = None,
+        start_lr: float = 1e-3,
+        min_lr: float = 1e-6,
+        lr_patience: int = 2,
+        lr_factor: float = 0.1,
+                 ):

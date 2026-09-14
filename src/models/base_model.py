@@ -189,7 +189,7 @@ class LitMixedLossModel(LitBaseModel):
             self,
             reg_loss: Callable | LossTerm | None = LossTerm(mse_loss, 1),
             cls_loss: Callable | LossTerm | None = None,
-            attention_losses: dict[str, list[LossTerm]] | None = None,
+            additional_losses: dict[str, list[LossTerm]] | None = None,
             start_lr: float = 1e-3,
             min_lr: float = 1e-6,
             lr_patience: int = 2,
@@ -207,7 +207,7 @@ class LitMixedLossModel(LitBaseModel):
 
         self.reg_loss = self._init_loss(reg_loss)
         self.cls_loss = self._init_loss(cls_loss)
-        self.attention_losses = attention_losses or {}
+        self.additional_losses = additional_losses or {}
 
     def _init_loss(self, loss: Callable | LossTerm | None) -> LossTerm | None:
         if isinstance(loss, Callable):
@@ -260,22 +260,22 @@ class LitMixedLossModel(LitBaseModel):
 
             overall_loss += reg_loss
 
-        for attention_name, loss_terms in self.attention_losses.items():
-            attention = getattr(model_output, attention_name)
+        for output_name, loss_terms in self.additional_losses.items():
+            output = getattr(model_output, output_name)
 
-            if attention is None:
+            if output is None:
                 raise ValueError(
-                    f'Attention \'{attention_name}\' is None, '
+                    f'Output \'{output_name}\' is None, '
                     'but losses were configured for it.'
                 )
 
             for term in loss_terms:
-                loss = term.fn(attention)
+                loss = term.fn(output)
 
                 loss_name = get_callable_name(term.fn).replace('_loss', '')
 
                 self.log_step_and_epoch_metric(
-                    f'{attention_name}/{loss_name}/{stage}_loss',
+                    f'{output_name}/{loss_name}/{stage}_loss',
                     loss,
                     batch_idx,
                     stage=stage,
