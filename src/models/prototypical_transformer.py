@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from src.models.base_model import LitMixedLossModel
 from src.models.modules import PositionalEncoding
-from src.models.utils import LossTerm, build_mlp, init_weights
+from src.models.utils import LossTerm, VerboseModelOutput, build_mlp, init_weights
 
 
 class PrototypicalTransformer(nn.Module):
@@ -168,7 +168,7 @@ class PrototypicalTransformer(nn.Module):
             self,
             states: torch.Tensor,
             controls: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> VerboseModelOutput:
         """Run the prototype Transformer
 
         The state and control vectors are concatenated at every history
@@ -179,9 +179,9 @@ class PrototypicalTransformer(nn.Module):
             ``(batch, history_steps, state_dim)``
         :param controls: Historical controls with shape
             ``(batch, history_steps, control_dim)``
-        :return: Tuple containing predicted future states with shape
-            ``(batch, n_pred_steps, output_dim)`` and the surface embedding with
-            shape ``(batch, d_model)``
+        :return: VerboseModelOutput containing predicted future states (reg_out) with shape
+            ``(batch, n_pred_steps, output_dim)`` and the prototype logits (cls_out) with
+            shape ``(batch, n_classes)``
         :raises ValueError: If state and control history lengths differ or their
             concatenated dimension does not match ``input_dim``
         """
@@ -232,7 +232,10 @@ class PrototypicalTransformer(nn.Module):
 
         predictions = self.out_proj(decoder_output)
 
-        return predictions, surface_embedding
+        return VerboseModelOutput(
+            reg_out=predictions,
+            cls_out=self.prototype_logits(surface_embedding)
+        )
 
     def prototype_logits(
             self,
