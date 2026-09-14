@@ -254,8 +254,8 @@ class LitRegressionSelfAttnLoss(LitRegressionModel):
 class LitMixedLossModel(LitBaseModel):
     def __init__(
             self,
-            reg_loss: Callable | None = mse_loss,
-            cls_loss: Callable | None = None,
+            reg_loss: LossTerm | None = LossTerm(mse_loss, 1),
+            cls_loss: LossTerm | None = None,
             attention_losses: dict[str, list[LossTerm]] | None = None,
             start_lr: float = 1e-3,
             min_lr: float = 1e-6,
@@ -294,7 +294,7 @@ class LitMixedLossModel(LitBaseModel):
         overall_loss = 0
 
         if self.cls_loss:
-            cls_loss = self.cls_loss(
+            cls_loss = self.cls_loss.weight * self.cls_loss.fn(
                 model_output.cls_out,
                 y_cls.squeeze(),
             )
@@ -309,7 +309,7 @@ class LitMixedLossModel(LitBaseModel):
             overall_loss += cls_loss
 
         if self.reg_loss:
-            reg_loss = self.reg_loss(
+            reg_loss = self.reg_loss.weight * self.reg_loss.fn(
                 model_output.reg_out,
                 y_reg.squeeze(),
             )
