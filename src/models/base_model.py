@@ -218,15 +218,18 @@ class LitMixedLossModel(LitBaseModel):
 
         if self.cls_loss:
             if self.reg_loss:
-                X, y_cls, y_reg = batch
+                Xs = batch[:-2]
+                y_cls, y_reg = batch[-2:]
             else:
-                X, y_cls = batch
+                Xs = batch[:-1]
+                y_cls = batch[-1]
         elif self.reg_loss:
-            X, y_reg = batch
+            Xs = batch[:-1]
+            y_reg = batch[-1]
         else:
             raise ValueError('Both cls and reg losses cannot be None')
 
-        model_output: VerboseModelOutput = self(X)
+        model_output: VerboseModelOutput = self(*Xs)
 
         overall_loss = 0
 
