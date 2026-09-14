@@ -253,13 +253,14 @@ class LitRegressionSelfAttnLoss(LitRegressionModel):
 
 class LitMixedLossModel(LitBaseModel):
     def __init__(
-        self,
-        reg_loss: Callable = mse_loss,
-        attention_losses: dict[str, list[LossTerm]] | None = None,
-        start_lr: float = 1e-3,
-        min_lr: float = 1e-6,
-        lr_patience: int = 2,
-        lr_factor: float = 0.1,
+            self,
+            reg_loss: Callable | None = mse_loss,
+            cls_loss: Callable | None = None,
+            attention_losses: dict[str, list[LossTerm]] | None = None,
+            start_lr: float = 1e-3,
+            min_lr: float = 1e-6,
+            lr_patience: int = 2,
+            lr_factor: float = 0.1,
     ):
         super().__init__(
             start_lr=start_lr,
@@ -269,6 +270,7 @@ class LitMixedLossModel(LitBaseModel):
         )
 
         self.reg_loss = reg_loss
+        self.cls_loss = cls_loss
         self.attention_losses = attention_losses or {}
 
     def _step(self, batch: object, batch_idx: object, stage: object) -> object:
@@ -276,19 +278,38 @@ class LitMixedLossModel(LitBaseModel):
 
         model_output: VerboseModelOutput = self(X)
 
-        reg_loss = self.reg_loss(
-            model_output.reg_out,
-            y.squeeze(),
-        )
+        overall_loss = 0
 
-        self.log_step_and_epoch_metric(
-            f'reg/{stage}_loss',
-            reg_loss,
-            batch_idx,
-            stage=stage,
-        )
+        if self.cls_loss is not None:
+            cls_loss = self.cls_loss(
+                model_output.cls_out,
+                y.squeeze(),
+            )
 
-        overall_loss = reg_loss
+            self.log_step_and_epoch_metric(
+                f'cls/{stage}_loss',
+                cls_loss,
+                batch_idx,
+                stage=stage,
+            )
+
+            overall_loss += cls_loss
+
+        if self.reg_loss is not None:
+            reg_loss = self.reg_loss(
+                model_output.reg_out,
+                y.squeeze(),
+            )
+
+            self.log_step_and_epoch_metric(
+                f'reg/{stage}_loss',
+                reg_loss,
+                batch_idx,
+                stage=stage,
+            )
+
+            overall_loss += reg_loss
+
 
         for attention_name, loss_terms in self.attention_losses.items():
             attention = getattr(model_output, attention_name)
@@ -327,6 +348,7 @@ class LitMixedLossModel(LitBaseModel):
 
     def validation_step(self, batch, batch_idx):
         self._step(batch, batch_idx, 'val')
+
 
 class LitMixedModel(LitBaseModel):
     def training_step(self, batch, batch_idx):
