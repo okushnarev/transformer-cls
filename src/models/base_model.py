@@ -254,8 +254,8 @@ class LitRegressionSelfAttnLoss(LitRegressionModel):
 class LitMixedLossModel(LitBaseModel):
     def __init__(
             self,
-            reg_loss: LossTerm | None = LossTerm(mse_loss, 1),
-            cls_loss: LossTerm | None = None,
+            reg_loss: Callable | LossTerm | None = LossTerm(mse_loss, 1),
+            cls_loss: Callable | LossTerm | None = None,
             attention_losses: dict[str, list[LossTerm]] | None = None,
             start_lr: float = 1e-3,
             min_lr: float = 1e-6,
@@ -272,9 +272,14 @@ class LitMixedLossModel(LitBaseModel):
         if not (cls_loss or reg_loss):
             raise ValueError('Both cls and reg losses cannot be None')
 
-        self.reg_loss = reg_loss
-        self.cls_loss = cls_loss
+        self.reg_loss = self._init_loss(reg_loss)
+        self.cls_loss = self._init_loss(cls_loss)
         self.attention_losses = attention_losses or {}
+
+    def _init_loss(self, loss: Callable | LossTerm | None) -> LossTerm | None:
+        if isinstance(loss, Callable):
+            return LossTerm(loss, 1)
+        return loss
 
     def _step(self, batch: object, batch_idx: object, stage: object) -> object:
 
