@@ -251,7 +251,7 @@ class LitRegressionSelfAttnLoss(LitRegressionModel):
         self.log_step_and_epoch_metric('overall/val_loss', overall_loss, batch_idx, stage='val')
 
 
-class LitRegressionAttentionLoss(LitRegressionModel):
+class LitMixedLossModel(LitBaseModel):
     def __init__(
         self,
         reg_loss: Callable = mse_loss,

@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 from torch.nn.functional import mse_loss
 
-from src.models.base_model import LitRegressionAttentionLoss
+from src.models.base_model import LitMixedLossModel
 from src.models.utils import LossTerm, VerboseModelOutputDecoder
 from src.models.verbose_transformer import VerboseTransformer
 
@@ -68,7 +68,7 @@ class VTransformeSingleSurfUpd(VerboseTransformer):
             decoder_cross_attn=dec_ca_weights,
         )
 
-class LitVTransformerSingleSurfUpdRegAttn(LitRegressionAttentionLoss):
+class LitVTransformerSingleSurfUpdRegAttn(LitMixedLossModel):
     def __init__(
             self,
             input_dim: int = 6,

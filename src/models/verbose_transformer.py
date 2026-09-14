@@ -6,7 +6,7 @@ from torch import Tensor
 from torch.nn.functional import mse_loss
 
 from src.loss import div_attn_loss, sharp_attn_loss
-from src.models.base_model import LitRegressionAttentionLoss, LitRegressionModel, LitRegressionSelfAttnLoss
+from src.models.base_model import LitMixedLossModel, LitRegressionModel, LitRegressionSelfAttnLoss
 from src.models.modules import VerboseTransformerDecoder, VerboseTransformerDecoderLayer
 from src.models.transformer import Transformer
 from src.models.utils import LossTerm, VerboseModelOutputDecoder, init_weights
@@ -219,7 +219,7 @@ class LitVerboseTransformerRegSelfAttn(LitRegressionSelfAttnLoss):
         return output.reg_out, output.decoder_self_attn
 
 
-class LitVerboseTransformerRegAttn(LitRegressionAttentionLoss):
+class LitVerboseTransformerRegAttn(LitMixedLossModel):
     def __init__(
             self,
             input_dim: int = 6,
