@@ -269,6 +269,9 @@ class LitMixedLossModel(LitBaseModel):
             lr_factor=lr_factor,
         )
 
+        if not (cls_loss or reg_loss):
+            raise ValueError('Both cls and reg losses cannot be None')
+
         self.reg_loss = reg_loss
         self.cls_loss = cls_loss
         self.attention_losses = attention_losses or {}
