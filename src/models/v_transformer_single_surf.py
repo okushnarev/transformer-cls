@@ -57,7 +57,7 @@ class VTransformeSingleSurfUpd(VerboseTransformer):
         self.surf_models = self.surf_upd_function(self.surf_models, new_surf_models)
 
 
-        cls_out = self.cls_ffn(ca_weights.permute(0, 2, 1)).squeeze()
+        cls_out = ca_weights.mean(-2)
         reg_out = self.reg_ffn(ca_out.flatten(start_dim=1))
 
         return VerboseModelOutputDecoder(
