@@ -11,22 +11,22 @@ from src.models.utils import LossTerm, build_mlp, init_weights
 
 class PrototypicalTransformer(nn.Module):
     def __init__(
-        self,
-        input_dim: int,
-        output_dim: int,
-        in_mlp_hidden_dims: list[int],
-        out_mlp_hidden_dims: list[int],
-        n_pred_steps: int,
-        n_classes: int,
-        temperature: float,
-        d_model: int,
-        n_head: int,
-        num_layers: int,
-        dim_feedforward: int,
-        activation: str = 'gelu',
-        layer_norm_eps: float = 1e-5,
-        dropout: float = 0.1,
-        decoder_causal: bool = False,
+            self,
+            input_dim: int,
+            output_dim: int,
+            in_mlp_hidden_dims: list[int],
+            out_mlp_hidden_dims: list[int],
+            n_pred_steps: int,
+            n_classes: int,
+            temperature: float,
+            d_model: int,
+            n_head: int,
+            num_layers: int,
+            dim_feedforward: int,
+            activation: str = 'gelu',
+            layer_norm_eps: float = 1e-5,
+            dropout: float = 0.1,
+            decoder_causal: bool = False,
     ):
         """Prototype-conditioned Transformer encoder-decoder for multi-step prediction
 
@@ -165,9 +165,9 @@ class PrototypicalTransformer(nn.Module):
         nn.init.normal_(self.prototypes, mean=0.0, std=0.02)
 
     def forward(
-        self,
-        states: torch.Tensor,
-        controls: torch.Tensor,
+            self,
+            states: torch.Tensor,
+            controls: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Run the prototype Transformer
 
@@ -235,8 +235,8 @@ class PrototypicalTransformer(nn.Module):
         return predictions, surface_embedding
 
     def prototype_logits(
-        self,
-        surface_embedding: torch.Tensor,
+            self,
+            surface_embedding: torch.Tensor,
     ) -> torch.Tensor:
         """Compute cosine-similarity logits against learnable prototypes
 
@@ -257,29 +257,29 @@ class PrototypicalTransformer(nn.Module):
 class LitPrototypicalTransformer(LitMixedLossModel):
     def __init__(
             self,
-        input_dim: int,
-        output_dim: int,
-        in_mlp_hidden_dims: list[int],
-        out_mlp_hidden_dims: list[int],
-        n_pred_steps: int,
-        n_classes: int,
-        temperature: float,
-        d_model: int,
-        n_head: int,
-        num_layers: int,
-        dim_feedforward: int,
-        activation: str,
-        layer_norm_eps: float,
-        dropout: float,
-        decoder_causal: bool,
-        reg_loss: Callable | LossTerm | None,
-        cls_loss: Callable | LossTerm | None,
-        additional_losses: dict[str, list[LossTerm]] | None,
-        start_lr: float,
-        min_lr: float,
-        lr_patience: int,
-        lr_factor: float,
-                 ):
+            input_dim: int,
+            output_dim: int,
+            in_mlp_hidden_dims: list[int],
+            out_mlp_hidden_dims: list[int],
+            n_pred_steps: int,
+            n_classes: int,
+            temperature: float,
+            d_model: int,
+            n_head: int,
+            num_layers: int,
+            dim_feedforward: int,
+            activation: str,
+            layer_norm_eps: float,
+            dropout: float,
+            decoder_causal: bool,
+            reg_loss: Callable | LossTerm | None,
+            cls_loss: Callable | LossTerm | None,
+            additional_losses: dict[str, list[LossTerm]] | None,
+            start_lr: float,
+            min_lr: float,
+            lr_patience: int,
+            lr_factor: float,
+    ):
         super().__init__(
             reg_loss=reg_loss,
             cls_loss=cls_loss,
