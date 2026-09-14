@@ -227,7 +227,7 @@ class PrototypicalTransformer(nn.Module):
         decoder_output = self.surf_models_decoder(
             tgt=decoder_input,
             memory=encoder_output,
-            tgt_mask=self.decoder_causal,
+            tgt_is_causal=self.decoder_causal,
         )
 
         predictions = self.out_proj(decoder_output)
