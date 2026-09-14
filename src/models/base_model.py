@@ -274,16 +274,26 @@ class LitMixedLossModel(LitBaseModel):
         self.attention_losses = attention_losses or {}
 
     def _step(self, batch: object, batch_idx: object, stage: object) -> object:
-        X, y = batch
+
+        if self.cls_loss:
+            if self.reg_loss:
+                X, y_cls, y_reg = batch
+            else:
+                X, y_cls = batch
+        elif self.reg_loss:
+            X, y_reg = batch
+        else:
+            raise ValueError('Both cls and reg losses cannot be None')
+
 
         model_output: VerboseModelOutput = self(X)
 
         overall_loss = 0
 
-        if self.cls_loss is not None:
+        if self.cls_loss:
             cls_loss = self.cls_loss(
                 model_output.cls_out,
-                y.squeeze(),
+                y_cls.squeeze(),
             )
 
             self.log_step_and_epoch_metric(
@@ -295,10 +305,10 @@ class LitMixedLossModel(LitBaseModel):
 
             overall_loss += cls_loss
 
-        if self.reg_loss is not None:
+        if self.reg_loss:
             reg_loss = self.reg_loss(
                 model_output.reg_out,
-                y.squeeze(),
+                y_reg.squeeze(),
             )
 
             self.log_step_and_epoch_metric(
