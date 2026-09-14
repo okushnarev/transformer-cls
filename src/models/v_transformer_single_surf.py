@@ -8,9 +8,6 @@ from src.models.base_model import LitRegressionAttentionLoss
 from src.models.utils import LossTerm, VerboseModelOutputDecoder
 from src.models.verbose_transformer import VerboseTransformer
 
-import pydevd_pycharm
-pydevd_pycharm.settrace('localhost', port=12345, stdoutToServer=True, stderrToServer=True)
-
 
 class VTransformeSingleSurfUpd(VerboseTransformer):
     def forward(
@@ -117,7 +114,7 @@ class LitVTransformerSingleSurfUpdRegAttn(LitRegressionAttentionLoss):
             norm_surf_models=norm_surf_models,
             dim_feedforward=dim_feedforward,
         )
-        self.model = torch.compile(model)
+        self.model = torch.compile(model, disable=True)
 
     def forward(self, x: Tensor) -> VerboseModelOutputDecoder:
         return self.model(x, out_dec_weights=True)
