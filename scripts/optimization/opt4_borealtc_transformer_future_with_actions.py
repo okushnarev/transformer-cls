@@ -11,13 +11,12 @@ import joblib
 import optuna
 import torch.nn.functional
 
-from src.datamodules.borealtc import BorealTCFutureDataModule
-
 # Add project root to PATH
 project_root = str(Path.cwd())
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+from src.datamodules.borealtc import BorealTCFutureDataModule
 from src.optimization import optimize
 from src.models.prototypical_transformer import LitPrototypicalTransformer
 from src.models.utils import LossTerm
