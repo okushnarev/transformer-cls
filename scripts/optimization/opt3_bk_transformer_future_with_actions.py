@@ -1,18 +1,15 @@
 import json
+import logging
 import shutil
+import sys
 from argparse import ArgumentParser
 from functools import partial
-from typing import Any
-import sys
 from pathlib import Path
-import logging
+from typing import Any
 
 import joblib
 import optuna
 import torch.nn.functional
-
-from src.models.prototypical_transformer import LitPrototypicalTransformer
-from src.models.utils import LossTerm
 
 # Add project root to PATH
 project_root = str(Path.cwd())
@@ -23,6 +20,8 @@ from src.surf_update_strategies import random_surf_upd
 from src.models.transformer import LitTransformerRegression
 from src.datamodules.belyaev_kushnarev import BKFutureDataModuleWithActions, BelyaevKushnarevFutureDataModule
 from src.optimization import optimize
+from src.models.prototypical_transformer import LitPrototypicalTransformer
+from src.models.utils import LossTerm
 
 
 def parse_args():
