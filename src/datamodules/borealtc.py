@@ -53,7 +53,6 @@ class BorealTCFutureDataModule(BorealTCDataModule):
             features: list[str],
             mode: Literal['cls', 'reg', 'cls+reg'],
             info_cols: list[str] | None,
-            reg_targets: list[str] | None,
             segment_size: int,
             sequence_length: int,
             test_size: float,
