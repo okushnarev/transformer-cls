@@ -87,32 +87,33 @@ def main():
     else:
         args.study_dir.mkdir(parents=True)
 
-    model_class = partial(
-        LitPrototypicalTransformer,
-        output_dim=7,
-        n_pred_steps=1,
-        n_classes=4,
-        temperature=0.1,
-        n_head=1,
-        num_layers=1,
-        activation='gelu',
-        layer_norm_eps=1e-5,
-        dropout=0.1,
-        decoder_causal=False,
-        start_lr=0.001,
-        min_lr=0.00001,
-        lr_factor=0.5,
-        lr_patience=20,
-        reg_loss=LossTerm(
+    model_class = LitPrototypicalTransformer
+
+    default_hparams = {
+        'output_dim':        7,
+        'n_pred_steps':      1,
+        'n_classes':         4,
+        'temperature':       0.1,
+        'n_head':            1,
+        'num_layers':        1,
+        'activation':        'gelu',
+        'layer_norm_eps':    1e-5,
+        'dropout':           0.1,
+        'decoder_causal':    False,
+        'start_lr':          0.001,
+        'min_lr':            0.00001,
+        'lr_factor':         0.5,
+        'lr_patience':       20,
+        'reg_loss':          LossTerm(
             fn=torch.nn.functional.mse_loss,
             weight=1,
         ),
-        cls_loss=LossTerm(
+        'cls_loss':          LossTerm(
             fn=torch.nn.functional.cross_entropy,
             weight=1,
         ),
-        additional_losses=None,
-    )
+        'additional_losses': None,
+    }
 
     datamodule_class = partial(
         BKFutureDataModuleWithActions,
@@ -142,7 +143,7 @@ def main():
         d_model = 2 ** trial.suggest_int('d_model_pow', low=4, high=10, log=True)
         dim_feedforward = 2 ** trial.suggest_int('dim_feedforward_pow', low=4, high=11, log=True)
 
-        hparams = {
+        hparams = default_hparams | {
             'sequence_length':     sequence_length,
             'in_dim':              len(args.features) + len(args.actions),
             'output_dim':          len(args.features),
