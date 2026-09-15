@@ -70,6 +70,8 @@ class BaseDataModule(L.LightningDataModule):
         self.df = self.df[self._all_cols]
         self.df[self._segment_col] = self.df.groupby(self.group_cols).cumcount() // self.segment_size
 
+        self.df_full = self.df.copy()
+
         self.df_train, self.df_test = segment_split(
             self.df,
             group_cols=self.group_cols,
@@ -111,6 +113,7 @@ class BaseDataModule(L.LightningDataModule):
         self.df_train[cols] = cls.fit_transform(self.df_train[cols])
         self.df_test[cols] = cls.transform(self.df_test[cols])
         self.df_val[cols] = cls.transform(self.df_val[cols])
+        self.df_full[cols] = cls.transform(self.df_full[cols])
 
     def _prep_dataset(self, df) -> TensorDataset:
         X = torch.tensor(
@@ -176,6 +179,13 @@ class BaseDataModule(L.LightningDataModule):
     def val_dataloader(self):
         return self._prep_dataloader(
             self.df_val,
+            shuffle=False,
+            persistent_workers=True if self.num_workers > 0 else False,
+        )
+
+    def full_dataloader(self):
+        return self._prep_dataloader(
+            self.df_full,
             shuffle=False,
             persistent_workers=True if self.num_workers > 0 else False,
         )
