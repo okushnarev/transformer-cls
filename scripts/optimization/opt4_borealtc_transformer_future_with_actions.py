@@ -127,7 +127,7 @@ def main():
     )
 
     def suggest_params(trial: optuna.trial.Trial) -> dict[str, Any]:
-        sequence_length = trial.suggest_int('sequence_length', low=5, high=90, log=True)
+        sequence_length = trial.suggest_int('sequence_length', low=5, high=120, log=True)
 
         n_in_layers = trial.suggest_int('n_in_layers', low=1, high=5, log=True)
         in_layers = [2 ** trial.suggest_int(f'in_layer_{i}_pow', low=3, high=10, log=True) for i in range(n_in_layers)]
