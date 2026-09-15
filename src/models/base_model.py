@@ -216,18 +216,7 @@ class LitMixedLossModel(LitBaseModel):
 
     def _step(self, batch: object, batch_idx: object, stage: object) -> object:
 
-        if self.cls_loss:
-            if self.reg_loss:
-                Xs = batch[:-2]
-                y_cls, y_reg = batch[-2:]
-            else:
-                Xs = batch[:-1]
-                y_cls = batch[-1]
-        elif self.reg_loss:
-            Xs = batch[:-1]
-            y_reg = batch[-1]
-        else:
-            raise ValueError('Both cls and reg losses cannot be None')
+        Xs, y_cls, y_reg = self._unpack_batch(batch)
 
         model_output: VerboseModelOutput = self(*Xs)
 
@@ -294,6 +283,23 @@ class LitMixedLossModel(LitBaseModel):
         )
 
         return overall_loss
+
+    def _unpack_batch(self, batch):
+        y_cls = None
+        y_reg = None
+        if self.cls_loss:
+            if self.reg_loss:
+                Xs = batch[:-2]
+                y_cls, y_reg = batch[-2:]
+            else:
+                Xs = batch[:-1]
+                y_cls = batch[-1]
+        elif self.reg_loss:
+            Xs = batch[:-1]
+            y_reg = batch[-1]
+        else:
+            raise ValueError('Both cls and reg losses cannot be None')
+        return Xs, y_cls, y_reg
 
     def training_step(self, batch, batch_idx):
         return self._step(batch, batch_idx, 'train')
