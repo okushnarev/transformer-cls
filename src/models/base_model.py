@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import astuple
 from typing import Callable, Literal
 
 import lightning as L
@@ -307,6 +308,9 @@ class LitMixedLossModel(LitBaseModel):
     def validation_step(self, batch, batch_idx):
         self._step(batch, batch_idx, 'val')
 
+    def predict_step(self, batch, batch_idx):
+        Xs, y_cls, y_reg = self._unpack_batch(batch)
+        return astuple(self(*Xs))
 
 class LitMixedModel(LitBaseModel):
     def training_step(self, batch, batch_idx):
