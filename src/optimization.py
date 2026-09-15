@@ -38,7 +38,13 @@ def optimize(
             trial: optuna.trial.Trial,
     ) -> float:
         hparams = suggest_hparams(trial)
-        model = model_class(**hparams)
+
+        model_sig = inspect.signature(model_class)
+        model_params = {}
+        for param, value in hparams.items():
+            if param in model_sig.parameters:
+                model_params[param] = value
+        model = model_class(**model_params)
 
         dm_sig = inspect.signature(datamodule_class)
         dm_params = {}
