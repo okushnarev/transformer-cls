@@ -11,14 +11,13 @@ import joblib
 import optuna
 import torch.nn.functional
 
+from src.datamodules.borealtc import BorealTCFutureDataModule
+
 # Add project root to PATH
 project_root = str(Path.cwd())
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from src.surf_update_strategies import random_surf_upd
-from src.models.transformer import LitTransformerRegression
-from src.datamodules.belyaev_kushnarev import BKFutureDataModuleWithActions, BelyaevKushnarevFutureDataModule
 from src.optimization import optimize
 from src.models.prototypical_transformer import LitPrototypicalTransformer
 from src.models.utils import LossTerm
@@ -30,24 +29,21 @@ def parse_args():
     parser.add_argument('--overwrite', action='store_true', help='Overwrite study folder')
     parser.add_argument('--resume', action='store_true', help='Continue study from available data')
     parser.add_argument('--batch-size', type=int, default=10000)
-    parser.add_argument('--segment-size', type=int, default=150)
-    parser.add_argument('--num-workers', type=int, default=2)
+    parser.add_argument('--segment-size', type=int, default=200)
+    parser.add_argument('--num-workers', type=int, default=4)
     parser.add_argument('--features', type=str, nargs='+',
                         default=[
-                            'm1vel',
-                            'm2vel',
-                            'm3vel',
-                            'm1cur',
-                            'm2cur',
-                            'm3cur',
+                            'wx',
+                            'wy',
+                            'wz',
+                            'ax',
+                            'ay',
+                            'az',
+                            'velL',
+                            'velR',
+                            'curL',
+                            'curR',
                             'Ke',
-                        ]
-                        )
-    parser.add_argument('--actions', type=str, nargs='+',
-                        default=[
-                            'm1setvel',
-                            'm2setvel',
-                            'm3setvel',
                         ]
                         )
     parser.add_argument('--n-trials', type=int, default=100)
@@ -90,9 +86,10 @@ def main():
     model_class = LitPrototypicalTransformer
 
     default_hparams = {
-        'output_dim':        7,
+        'in_dim':     len(args.features),
+        'output_dim': len(args.features),
         'n_pred_steps':      1,
-        'n_classes':         4,
+        'n_classes':         5,
         'temperature':       0.1,
         'n_head':            1,
         'num_layers':        1,
@@ -116,9 +113,8 @@ def main():
     }
 
     datamodule_class = partial(
-        BKFutureDataModuleWithActions,
+        BorealTCFutureDataModule,
         features=args.features,
-        actions=args.actions,
         info_cols=[],
         mode='cls+reg',
         segment_size=args.segment_size,
@@ -145,8 +141,6 @@ def main():
 
         hparams = default_hparams | {
             'sequence_length':     sequence_length,
-            'in_dim':              len(args.features) + len(args.actions),
-            'output_dim':          len(args.features),
             'in_mlp_hidden_dims':  in_layers,
             'out_mlp_hidden_dims': out_reg_layers,
             'd_model':             d_model,
