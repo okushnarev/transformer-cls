@@ -167,7 +167,7 @@ class PrototypicalTransformer(nn.Module):
     def forward(
             self,
             states: torch.Tensor,
-            controls: torch.Tensor,
+            controls: torch.Tensor | None = None,
     ) -> VerboseModelOutput:
         """Run the prototype Transformer
 
@@ -191,17 +191,27 @@ class PrototypicalTransformer(nn.Module):
                 'States must have shape (batch, history_steps, state_dim)'
             )
 
-        if controls.ndim != 3:
-            raise ValueError(
-                'Controls must have shape (batch, history_steps, control_dim)'
-            )
+        if controls is None:
+            if states.size(-1) == self.input_dim:
+                # No controls expected
+                x = states
+            else:
+                raise ValueError(
+                    f'Controls were not provided, but states dimension ({states.size(-1)}) '
+                    f'does not match expected input_dim ({self.input_dim}).'
+                )
+        else:
+            if controls.ndim != 3:
+                raise ValueError(
+                    'Controls must have shape (batch, history_steps, control_dim)'
+                )
 
-        if states.shape[:2] != controls.shape[:2]:
-            raise ValueError(
-                'States and controls must have the same batch and history dimensions'
-            )
+            if states.shape[:2] != controls.shape[:2]:
+                raise ValueError(
+                    'States and controls must have the same batch and history dimensions'
+                )
 
-        x = torch.cat((states, controls), dim=-1)
+            x = torch.cat((states, controls), dim=-1)
 
         if x.shape[-1] != self.input_dim:
             raise ValueError(
