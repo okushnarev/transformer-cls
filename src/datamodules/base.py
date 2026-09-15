@@ -191,7 +191,4 @@ class BaseDataModule(L.LightningDataModule):
         )
 
     def predict_dataloader(self):
-        return self._prep_dataloader(
-            self.df_test,
-            shuffle=False
-        )
+        return self.test_dataloader()
