@@ -86,8 +86,8 @@ def main():
     model_class = LitPrototypicalTransformer
 
     default_hparams = {
-        'in_dim':     len(args.features),
-        'output_dim': len(args.features),
+        'in_dim':            len(args.features),
+        'output_dim':        len(args.features),
         'n_pred_steps':      1,
         'n_classes':         5,
         'temperature':       0.1,
