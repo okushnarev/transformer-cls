@@ -2,6 +2,14 @@ import torch
 import torch.nn.functional as F
 
 
+def mse_loss(*args, **kwargs) -> torch.Tensor:
+    return F.mse_loss(*args, **kwargs)
+
+
+def cross_entropy(*args, **kwargs) -> torch.Tensor:
+    return F.cross_entropy(*args, **kwargs)
+
+
 def cosine_loss(
         in_data: torch.Tensor,
         margin: float = 0.1
@@ -76,6 +84,7 @@ def div_attn_loss(
     ).sum(dim=-1).mean()
 
     return div_loss
+
 
 def eye_loss(in_data: torch.Tensor) -> torch.Tensor:
     keys_sz = in_data.size(-1)
