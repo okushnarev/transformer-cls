@@ -51,7 +51,7 @@ class VerboseModelOutputDecoder(VerboseModelOutput):
     decoder_cross_attn: Tensor | None = None
 
 
-@dataclass(frozen=True)
+@dataclass
 class LossTerm:
     fn: Callable
     weight: float
