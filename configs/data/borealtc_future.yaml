@@ -1,0 +1,24 @@
+class_path: src.datamodules.borealtc.BorealTCFutureDataModule
+init_args:
+  features:
+    - wx
+    - wy
+    - wz
+    - ax
+    - ay
+    - az
+    - velL
+    - velR
+    - curL
+    - curR
+    - Ke
+  info_cols: []
+  mode: cls+reg
+  segment_size: 100
+  sequence_length: 30
+  test_size: 0.2
+  val_size: 0.1
+  batch_size: 60000
+  num_workers:  2
+  pin_memory: True
+  seed: 69
