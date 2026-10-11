@@ -1,0 +1,26 @@
+class_path: src.models.prototypical_transformer.LitPrototypicalTransformer
+init_args:
+  in_dim: 10
+  output_dim: 7
+  in_mlp_hidden_dims: []
+  out_mlp_hidden_dims: []
+  n_pred_steps: 1
+  n_classes: 4
+  temperature: 0.1
+  d_model: 64
+  n_head: 1
+  num_layers: 1
+  dim_feedforward: 128
+  activation: gelu
+  layer_norm_eps: 1e-5
+  dropout: 0.1
+  decoder_causal: False
+  reg_loss:
+    fn: torch.nn.functional.mse_loss
+    weight: 1.0
+  cls_loss:
+    fn: torch.nn.functional.cross_entropy
+    weight: 1.0
+  start_lr: 0.001
+  min_lr: 0.00001
+  lr_factor: 0.5
