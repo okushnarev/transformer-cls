@@ -1,0 +1,27 @@
+[project]
+name = "transformer-cls"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "lightning[pytorch-extra]>=2.6.1",
+    "numpy>=2.4.4",
+    "omegaconf>=2.3.0",
+    "optuna>=4.9.0",
+    "optuna-integration[pytorch-lightning]>=4.9.0",
+    "pandas>=3.0.2",
+    "plotly>=6.7.0",
+    "scikit-learn>=1.8.0",
+]
+
+[project.optional-dependencies]
+logging = [
+    "tensorboard>=2.20.0",
+]
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
+    "pydevd-pycharm~=241.19072.16",
+]
