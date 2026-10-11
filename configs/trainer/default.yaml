@@ -1,0 +1,26 @@
+logger:
+  class_path: src.logger.OverwritableTensorBoardLogger
+  init_args:
+    name: default
+    default_hp_metric: false
+    save_dir: ${default_root_dir}
+    overwrite: true
+callbacks:
+  - class_path: src.callbacks.CustomPredictionWriter
+    init_args:
+      write_interval: epoch
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      monitor: overall/val_loss
+      mode: min
+      every_n_epochs: 10
+      filename: best
+      save_last: True
+      save_on_exception: True
+  - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+    init_args:
+      logging_interval: epoch
+default_root_dir: experiments
+max_epochs: 200
+precision: bf16-mixed
+check_val_every_n_epoch: 10
