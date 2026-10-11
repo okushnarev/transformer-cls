@@ -50,6 +50,9 @@ class VerboseModelOutputDecoder(VerboseModelOutput):
     decoder_self_attn: Tensor | None = None
     decoder_cross_attn: Tensor | None = None
 
+@dataclass(frozen=True)
+class VerboseModelOutputSurfEmbedding(VerboseModelOutput):
+    surf_embedding: Tensor | None = None
 
 @dataclass
 class LossTerm:

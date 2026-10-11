@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from src.models.base_model import LitMixedLossModel
 from src.models.modules import PositionalEncoding
-from src.models.utils import LossTerm, VerboseModelOutput, build_mlp, init_weights
+from src.models.utils import LossTerm, VerboseModelOutput, VerboseModelOutputSurfEmbedding, build_mlp, init_weights
 
 
 class PrototypicalTransformer(nn.Module):
@@ -168,7 +168,7 @@ class PrototypicalTransformer(nn.Module):
             self,
             states: torch.Tensor,
             controls: torch.Tensor | None = None,
-    ) -> VerboseModelOutput:
+    ) -> VerboseModelOutputSurfEmbedding:
         """Run the prototype Transformer
 
         The state and control vectors are concatenated at every history
@@ -242,9 +242,10 @@ class PrototypicalTransformer(nn.Module):
 
         predictions = self.out_proj(decoder_output)
 
-        return VerboseModelOutput(
+        return VerboseModelOutputSurfEmbedding(
             reg_out=predictions,
-            cls_out=self.prototype_logits(surface_embedding)
+            cls_out=self.prototype_logits(surface_embedding),
+            surf_embedding=surface_embedding,
         )
 
     def prototype_logits(
