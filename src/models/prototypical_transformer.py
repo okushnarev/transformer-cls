@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from src.models.base_model import LitMixedLossModel
 from src.models.modules import PositionalEncoding
-from src.models.utils import LossTerm, VerboseModelOutput, VerboseModelOutputSurfEmbedding, build_mlp, init_weights
+from src.models.utils import LossTerm, VerboseModelOutputSurfEmbedding, build_mlp, init_weights
 
 
 class PrototypicalTransformer(nn.Module):
