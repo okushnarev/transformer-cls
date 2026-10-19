@@ -76,6 +76,8 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
             hidden_size=self.d_model,
         )
 
+        self.update_surfaces = False
+
     def forward(
             self,
             states: torch.Tensor,
@@ -105,6 +107,11 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
         surf_embedding = surf_embedding.unsqueeze(1).expand(-1, self.prototypes.size(0), -1)
 
         gru_out = self.gru_cell(surf_embedding, self.prototypes.expand(batch_size, -1, -1))
+
+        if self.update_surfaces:
+            with torch.no_grad():
+                updated_prototypes = gru_out.mean(dim=0, keepdims=False)
+                self.prototypes.copy_(updated_prototypes)
 
         return VerboseModelOutputSurfEmbedding(
             reg_out=ret.reg_out,
