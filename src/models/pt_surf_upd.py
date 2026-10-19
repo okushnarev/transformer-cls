@@ -1,13 +1,11 @@
 from typing import Any
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 from src.models.base_model import LitMixedLossModel
-from src.models.modules import PositionalEncoding
 from src.models.prototypical_transformer import PrototypicalTransformer
-from src.models.utils import BatchedGRUCell, LossTerm, VerboseModelOutputSurfEmbedding, build_mlp, init_weights
+from src.models.utils import BatchedGRUCell, LossTerm, VerboseModelOutputSurfEmbedding
 
 
 class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
@@ -144,7 +142,6 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
         return embedding @ prototypes.transpose(-1, -2) / self.temperature
 
 
-
 class LitPrototypicalTransformerSurfUpd(LitMixedLossModel):
     def __init__(
             self,
@@ -203,28 +200,3 @@ class LitPrototypicalTransformerSurfUpd(LitMixedLossModel):
 
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         return self.model(*args, **kwargs)
-
-
-if __name__ == '__main__':
-    input_dim = 5
-    seq_len = 8
-    batch_size = 10
-    model = PrototypicalTransformerSurfUpdates(
-        input_dim=input_dim,
-        output_dim=5,
-        in_mlp_hidden_dims=[],
-        out_mlp_hidden_dims=[],
-        n_pred_steps=1,
-        n_classes=4,
-        temperature=0.1,
-        d_model=16,
-        n_head=1,
-        num_layers=1,
-        dim_feedforward=32,
-    )
-
-    in_data = torch.randn(batch_size, seq_len, input_dim)
-    with torch.no_grad():
-        out = model(in_data)
-
-    print(out)
