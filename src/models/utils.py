@@ -50,9 +50,11 @@ class VerboseModelOutputDecoder(VerboseModelOutput):
     decoder_self_attn: Tensor | None = None
     decoder_cross_attn: Tensor | None = None
 
+
 @dataclass(frozen=True)
 class VerboseModelOutputSurfEmbedding(VerboseModelOutput):
     surf_embedding: Tensor | None = None
+
 
 @dataclass
 class LossTerm:
@@ -112,3 +114,23 @@ class MultiTaskLoss(nn.Module):
         }
 
         return overall_loss, info
+
+
+class BatchedGRUCell(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.gru_cell = nn.GRUCell(input_size, hidden_size)
+
+    def forward(self, x, h):
+        # x: (batch, vocab_sz, input_size)
+        # h: (batch, vocab_sz, hidden_size)
+
+        B, V, _ = x.shape
+        H = h.shape[-1]
+
+        x = x.reshape(B * V, -1)
+        h = h.reshape(B * V, H)
+
+        h_new = self.gru_cell(x, h)
+
+        return h_new.reshape(B, V, H)
