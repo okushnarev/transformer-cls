@@ -225,7 +225,7 @@ class LitMixedLossModel(LitBaseModel):
 
         if self.cls_loss:
             cls_loss = self.cls_loss.weight * self.cls_loss.fn(
-                model_output.cls_out,
+                model_output.cls_out.squeeze(),
                 y_cls.squeeze(),
             )
 
