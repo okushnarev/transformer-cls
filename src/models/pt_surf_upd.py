@@ -98,8 +98,7 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
             concatenated dimension does not match ``input_dim``
         """
 
-        batch_size = states.size(0
-                                 )
+        batch_size = states.size(0)
         ret: VerboseModelOutputSurfEmbedding = super().forward(states, controls)
 
         surf_embedding = ret.surf_embedding
