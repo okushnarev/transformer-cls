@@ -121,7 +121,7 @@ class BatchedGRUCell(nn.Module):
         super().__init__()
         self.gru_cell = nn.GRUCell(input_size, hidden_size)
 
-    def forward(self, x, h):
+    def forward(self, x: torch.Tensor, h: torch.Tensor):
         # x: (batch, vocab_sz, input_size)
         # h: (batch, vocab_sz, hidden_size)
 
