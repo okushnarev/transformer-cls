@@ -107,13 +107,11 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
 
         gru_out = self.gru_cell(surf_embedding, self.prototypes.expand(batch_size, -1, -1))
 
-        ret = VerboseModelOutputSurfEmbedding(
+        return VerboseModelOutputSurfEmbedding(
             reg_out=ret.reg_out,
             cls_out=self.prototype_logits(ret.surf_embedding, gru_out),
             surf_embedding=ret.surf_embedding,
         )
-
-        return ret
 
     def prototype_logits(
             self,
