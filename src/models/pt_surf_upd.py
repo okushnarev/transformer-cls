@@ -489,6 +489,26 @@ class PrototypicalTransformerSurfUpdateAll(PrototypicalTransformerSurfUpdates):
             surf_embedding=ret.surf_embedding,
         )
 
+    def prototype_logits(
+            self,
+            surface_embedding: torch.Tensor,
+            prototypes: torch.Tensor | None = None
+    ) -> torch.Tensor:
+        """Compute cosine-similarity logits against learnable prototypes
+
+        This is kept separate from :meth:`forward` so the training module can
+        decide how the prototype objective should be formulated.
+
+        :param surface_embedding: Surface embeddings with shape
+            ``(batch, d_model)``
+        :param prototypes: Updated batched prototypes with shape ``(batch, n_classes, d_model)``
+        :return: Prototype logits with shape ``(batch, n_classes)``
+        """
+
+        if prototypes is None:
+            batch_size = surface_embedding.size(0)
+            prototypes = self.prototypes[:batch_size]
+        return super().prototype_logits(surface_embedding, prototypes)
 
 class LitPrototypicalTransformerSurfUpdAll(LitMixedLossModel):
     def __init__(
