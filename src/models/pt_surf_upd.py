@@ -143,7 +143,10 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
         embedding = F.normalize(surface_embedding, dim=-1)
         prototypes = F.normalize(prototypes, dim=-1)
 
-        return embedding @ prototypes.transpose(-1, -2) / self.temperature
+        ret = embedding @ prototypes.transpose(-1, -2) / self.temperature
+        if ret.ndim == 3:
+            ret = ret.squeeze(1)
+        return ret
 
 
 class LitPrototypicalTransformerSurfUpd(LitMixedLossModel):
