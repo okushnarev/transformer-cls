@@ -210,6 +210,140 @@ class LitPrototypicalTransformerSurfUpd(LitMixedLossModel):
         return self.model(*args, **kwargs)
 
 
+class PrototypicalTransformerSurfUpdateEachStep(PrototypicalTransformerSurfUpdates):
+    def __init__(
+            self,
+            input_dim: int,
+            output_dim: int,
+            in_mlp_hidden_dims: list[int],
+            out_mlp_hidden_dims: list[int],
+            n_pred_steps: int,
+            n_classes: int,
+            temperature: float,
+            d_model: int,
+            n_head: int,
+            num_layers: int,
+            dim_feedforward: int,
+            activation: str = 'gelu',
+            layer_norm_eps: float = 1e-5,
+            dropout: float = 0.1,
+            decoder_causal: bool = False,
+    ):
+        """Prototype-conditioned Transformer encoder-decoder for multi-step prediction
+
+            The encoder receives a history of state and control observations and prepends
+            a learnable surface token. The output corresponding to this token is the
+            segment-level representation used by the prototype objective
+
+            The decoder receives ``n_pred_steps`` learned future-query tokens and
+            cross-attends to the complete encoder output. It predicts all future states
+            in parallel
+
+            :param input_dim: Dimension of the concatenated state and control vector
+            :param output_dim: Dimension of the predicted state vector
+            :param in_mlp_hidden_dims: Hidden dimensions of the encoder input projection MLP
+            :param out_mlp_hidden_dims: Hidden dimensions of the decoder output MLP
+            :param n_pred_steps: Number of future states predicted in one forward pass
+            :param n_classes: Number of prototype classes
+            :param temperature: Temperature applied to cosine similarities
+            :param d_model: Transformer embedding dimension
+            :param n_head: Number of attention heads
+            :param num_layers: Number of Transformer encoder and decoder layers
+            :param dim_feedforward: Hidden dimension of Transformer feed-forward blocks
+            :param activation: Transformer activation function
+            :param layer_norm_eps: Epsilon used by Transformer layer normalization
+            :param dropout: Dropout probability
+            :param decoder_causal: Whether decoder self-attention is causally masked
+        """
+        super().__init__(
+            input_dim=input_dim,
+            output_dim=output_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            out_mlp_hidden_dims=out_mlp_hidden_dims,
+            n_pred_steps=n_pred_steps,
+            n_classes=n_classes,
+            temperature=temperature,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            dim_feedforward=dim_feedforward,
+            activation=activation,
+            layer_norm_eps=layer_norm_eps,
+            dropout=dropout,
+            decoder_causal=decoder_causal,
+        )
+
+        del self.prototypes
+        self.register_buffer('prototypes', torch.randn(self.n_classes, self.d_model))
+
+        self.gru_cell = BatchedGRUCell(
+            input_size=self.d_model,
+            hidden_size=self.d_model,
+        )
+
+        self.update_surfaces = True
+
+
+class LitPrototypicalTransformerSurfUpdEachStep(LitMixedLossModel):
+    def __init__(
+            self,
+            in_dim: int,
+            output_dim: int,
+            in_mlp_hidden_dims: list[int],
+            out_mlp_hidden_dims: list[int],
+            n_pred_steps: int,
+            n_classes: int,
+            temperature: float,
+            d_model: int,
+            n_head: int,
+            num_layers: int,
+            dim_feedforward: int,
+            activation: str,
+            layer_norm_eps: float,
+            dropout: float,
+            decoder_causal: bool,
+            reg_loss: LossTerm | None,
+            cls_loss: LossTerm | None,
+            additional_losses: dict[str, list[LossTerm]] | None,
+            start_lr: float,
+            min_lr: float,
+            lr_patience: int,
+            lr_factor: float,
+    ):
+        super().__init__(
+            reg_loss=reg_loss,
+            cls_loss=cls_loss,
+            additional_losses=additional_losses,
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+
+        model = PrototypicalTransformerSurfUpdateEachStep(
+            input_dim=in_dim,
+            output_dim=output_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            out_mlp_hidden_dims=out_mlp_hidden_dims,
+            n_pred_steps=n_pred_steps,
+            n_classes=n_classes,
+            temperature=temperature,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            dim_feedforward=dim_feedforward,
+            activation=activation,
+            layer_norm_eps=layer_norm_eps,
+            dropout=dropout,
+            decoder_causal=decoder_causal,
+        )
+
+        self.model = torch.compile(model)
+
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        return self.model(*args, **kwargs)
+
+
 class PrototypicalTransformerSurfUpdateOne(PrototypicalTransformerSurfUpdates):
     def __init__(
             self,
