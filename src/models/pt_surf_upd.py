@@ -681,6 +681,7 @@ class PrototypicalTransformerSurfUpdateAll(PrototypicalTransformerSurfUpdates):
             prototypes = self.prototypes[:batch_size]
         return super().prototype_logits(surface_embedding, prototypes)
 
+
 class LitPrototypicalTransformerSurfUpdAll(LitMixedLossModel):
     def __init__(
             self,
