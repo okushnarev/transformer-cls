@@ -312,7 +312,7 @@ class PrototypicalTransformerSurfUpdateEachStep(PrototypicalTransformerSurfUpdat
         gru_out = self.gru_cell(surf_embedding, self.prototypes.expand(batch_size, -1, -1))
 
         updated_prototypes = gru_out.mean(dim=0, keepdims=False)
-        self.prototypes = updated_prototypes.detach()
+        self.prototypes = updated_prototypes.clone().detach()
 
         return VerboseModelOutputSurfEmbedding(
             reg_out=ret.reg_out,
