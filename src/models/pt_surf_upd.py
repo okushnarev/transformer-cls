@@ -738,7 +738,7 @@ class LitPrototypicalTransformerSurfUpdAll(LitMixedLossModel):
             decoder_causal=decoder_causal,
         )
 
-        self.model = torch.compile(model)
+        self.model = torch.compile(model, disable=True)
 
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         return self.model(*args, **kwargs)
