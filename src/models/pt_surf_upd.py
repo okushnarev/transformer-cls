@@ -273,7 +273,7 @@ class PrototypicalTransformerSurfUpdateEachStep(PrototypicalTransformerSurfUpdat
             decoder_causal=decoder_causal,
         )
 
-        del self.prototypes
+        del self.prototypes, self.update_surfaces
         self.register_buffer('prototypes', torch.randn(self.n_classes, self.d_model))
 
         self.gru_cell = BatchedGRUCell(
@@ -281,7 +281,44 @@ class PrototypicalTransformerSurfUpdateEachStep(PrototypicalTransformerSurfUpdat
             hidden_size=self.d_model,
         )
 
-        self.update_surfaces = True
+    def forward(
+            self,
+            states: torch.Tensor,
+            controls: torch.Tensor | None = None,
+    ) -> VerboseModelOutputSurfEmbedding:
+        """Run the prototype Transformer
+
+        The state and control vectors are concatenated at every history
+        timestep. A surface token is prepended before the encoder. The decoder
+        then uses learned future queries to predict all requested future states
+
+        :param states: Historical states with shape
+            ``(batch, history_steps, state_dim)``
+        :param controls: Historical controls with shape
+            ``(batch, history_steps, control_dim)``
+        :return: VerboseModelOutput containing predicted future states (reg_out) with shape
+            ``(batch, n_pred_steps, output_dim)`` and the prototype logits (cls_out) with
+            shape ``(batch, n_classes)``
+        :raises ValueError: If state and control history lengths differ or their
+            concatenated dimension does not match ``input_dim``
+        """
+
+        batch_size = states.size(0)
+        ret: VerboseModelOutputSurfEmbedding = super(PrototypicalTransformerSurfUpdates, self).forward(states, controls)
+
+        surf_embedding = ret.surf_embedding
+        surf_embedding = surf_embedding.unsqueeze(1).expand(-1, self.prototypes.size(0), -1)
+
+        gru_out = self.gru_cell(surf_embedding, self.prototypes.expand(batch_size, -1, -1))
+
+        updated_prototypes = gru_out.mean(dim=0, keepdims=False)
+        self.prototypes = updated_prototypes.detach()
+
+        return VerboseModelOutputSurfEmbedding(
+            reg_out=ret.reg_out,
+            cls_out=self.prototype_logits(ret.surf_embedding, gru_out),
+            surf_embedding=ret.surf_embedding,
+        )
 
 
 class LitPrototypicalTransformerSurfUpdEachStep(LitMixedLossModel):
