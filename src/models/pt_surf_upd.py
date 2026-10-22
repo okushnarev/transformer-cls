@@ -316,7 +316,7 @@ class PrototypicalTransformerSurfUpdateEachStep(PrototypicalTransformerSurfUpdat
 
         return VerboseModelOutputSurfEmbedding(
             reg_out=ret.reg_out,
-            cls_out=self.prototype_logits(ret.surf_embedding, gru_out),
+            cls_out=self.prototype_logits(ret.surf_embedding, updated_prototypes),
             surf_embedding=ret.surf_embedding,
         )
 
