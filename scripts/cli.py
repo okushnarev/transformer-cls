@@ -1,5 +1,6 @@
-from lightning.pytorch.cli import LightningCLI
 import torch
+from lightning.pytorch.cli import LightningCLI
+
 torch.set_float32_matmul_precision('medium')
 
 import sys
@@ -9,6 +10,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
+
 class MyLightningCLI(LightningCLI):
     def add_arguments_to_parser(self, parser):
         parser.link_arguments('data.init_args.sequence_length', 'model.init_args.sequence_length')
@@ -17,6 +19,7 @@ class MyLightningCLI(LightningCLI):
             'model.init_args.input_dim',
             compute_fn=len,
         )
+
 
 def cli_main():
     cli = MyLightningCLI(
