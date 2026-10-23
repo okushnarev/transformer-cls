@@ -869,6 +869,11 @@ class PrototypicalTransformerSurfUpdateGRU(PrototypicalTransformerSurfUpdates):
             .transpose(1, 2)
         )
 
+        if self.update_surfaces:
+            # Shape: (N_proto, D)
+            updated_prototypes = gru_out.mean(dim=(0, 1), keepdim=False)
+            self.prototypes.copy_(updated_prototypes)
+
         # Shape: (B, S, 1, D)
         prototype_logits_input = surf_embedding.unsqueeze(2)
 
