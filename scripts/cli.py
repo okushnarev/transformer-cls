@@ -5,6 +5,9 @@ torch.set_float32_matmul_precision('medium')
 
 import sys
 from pathlib import Path
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # Add project root to PATH
 project_root = Path(__file__).resolve().parent.parent
