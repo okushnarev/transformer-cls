@@ -23,6 +23,7 @@ class BaseDataModule(L.LightningDataModule):
             reg_targets: Optional[list[str]] = [],
             segment_size: int = 100,
             sequence_length: int = 10,
+            consecutive_steps: int | None = None,
             test_size: float = 0.2,
             val_size: float = 0.1,
             batch_size: int = 4096,
@@ -36,6 +37,7 @@ class BaseDataModule(L.LightningDataModule):
 
         self.segment_size = segment_size
         self.sequence_length = sequence_length
+        self.consecutive_steps = consecutive_steps
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory

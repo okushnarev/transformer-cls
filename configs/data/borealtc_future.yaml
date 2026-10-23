@@ -16,6 +16,7 @@ init_args:
   mode: cls+reg
   segment_size: 100
   sequence_length: 30
+  consecutive_steps: None
   test_size: 0.2
   val_size: 0.1
   batch_size: 60000
