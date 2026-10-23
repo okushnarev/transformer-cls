@@ -224,9 +224,13 @@ class LitMixedLossModel(LitBaseModel):
         overall_loss = 0
 
         if self.cls_loss:
+            cls_out = model_output.cls_out
+            if cls_out.ndim > 2:
+                cls_out = cls_out.flatten(end_dim=-2)
+
             cls_loss = self.cls_loss.weight * self.cls_loss.fn(
-                model_output.cls_out.squeeze(),
-                y_cls.squeeze(),
+                cls_out,
+                y_cls.flatten(),
             )
 
             self.log_step_and_epoch_metric(
