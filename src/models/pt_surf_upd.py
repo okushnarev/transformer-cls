@@ -1070,7 +1070,7 @@ class PrototypicalTransformerSurfUpdateOneGRU(PrototypicalTransformerSurfUpdates
             .transpose(1, 2)
         )
 
-        prep_out = self.prototypes.repeat(B, S, 1, 1)
+        prep_out = self.prototypes.to(gru_out.dtype).repeat(B, S, 1, 1)
         argmax_cls = ret.cls_out.argmax(dim=-1).reshape(B, S)
         batch_idx = torch.arange(B, device=gru_out.device)[:, None]  # (B, 1)
         seq_idx = torch.arange(S, device=gru_out.device)[None, :]  # (1, S)
