@@ -871,7 +871,7 @@ class PrototypicalTransformerSurfUpdateGRU(PrototypicalTransformerSurfUpdates):
 
         if self.update_prototypes:
             # Shape: (N_proto, D)
-            updated_prototypes = gru_out.mean(dim=(0, 1), keepdim=False)
+            updated_prototypes = gru_out[:, -1, ...].mean(dim=0, keepdim=False)
             self.prototypes.copy_(updated_prototypes)
 
         # Shape: (B, S, 1, D)
