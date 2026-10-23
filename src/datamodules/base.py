@@ -1,6 +1,7 @@
 from typing import Optional
 
 import lightning as L
+import numpy as np
 import pandas as pd
 import torch
 from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -117,39 +118,53 @@ class BaseDataModule(L.LightningDataModule):
         self.df_val[cols] = cls.transform(self.df_val[cols])
         self.df_full[cols] = cls.transform(self.df_full[cols])
 
+    def _prep_seq(self, seq: np.ndarray) -> np.ndarray:
+        if self.consecutive_steps is None:
+            return seq
+        if self.consecutive_steps <= 0:
+            raise ValueError(
+                f'Number of consecutive steps must be greater than 0, now {self.consecutive_steps}')
+        N = seq.shape[0]
+        new_N = N // self.consecutive_steps
+        if new_N < 2:
+            raise ValueError(f'Number of consecutive steps is too high ({self.consecutive_steps}). '
+                             f'Cannot create more than {new_N} items for dataset. '
+                             f'Initial number of dataset items {N}')
+        return seq[:new_N * self.consecutive_steps].reshape(new_N, self.consecutive_steps, *seq.shape[1:])
+
     def _prep_dataset(self, df) -> TensorDataset:
         X = torch.tensor(
-            create_sequences(
+            self._prep_seq(create_sequences(
                 df,
                 group_by=self.group_cols,
                 cols=self.features + self.info_cols,
                 length=self.sequence_length,
                 mode='full'
-            ),
+            )),
             dtype=torch.float
         )
 
         y_cls = torch.tensor(
-            create_sequences(
+            self._prep_seq(create_sequences(
                 df,
                 group_by=self.group_cols,
                 cols=self.cls_target,
                 length=self.sequence_length,
                 mode='last'
 
-            ),
+            )),
             dtype=torch.long
         ) if self.cls_target else None
 
         y_reg = torch.tensor(
-            create_sequences(
+            self._prep_seq(create_sequences(
                 df,
                 group_by=self.group_cols,
                 cols=self.reg_targets,
                 length=self.sequence_length,
                 mode='last'
 
-            ),
+            )),
             dtype=torch.float
         ) if self.reg_targets else None
 

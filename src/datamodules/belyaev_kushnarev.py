@@ -149,35 +149,35 @@ class BKFutureDataModuleWithActions(BelyaevKushnarevFutureDataModule):
         tensors = orig_dataset.tensors
 
         X_features = torch.tensor(
-            create_sequences(
+            self._prep_seq(create_sequences(
                 df,
                 group_by=self.group_cols,
                 cols=self.features,
                 length=self.sequence_length,
                 mode='full'
-            ),
+            )),
             dtype=torch.float
         )
 
         X_actions = torch.tensor(
-            create_sequences(
+            self._prep_seq(create_sequences(
                 df,
                 group_by=self.group_cols,
                 cols=self.actions,
                 length=self.sequence_length,
                 mode='full'
-            ),
+            )),
             dtype=torch.float
         )
 
         X_info = torch.tensor(
-            create_sequences(
+            self._prep_seq(create_sequences(
                 df,
                 group_by=self.group_cols,
                 cols=self.info_cols,
                 length=self.sequence_length,
                 mode='full'
-            ),
+            )),
             dtype=torch.float
         ) if self.info_cols else None
 
