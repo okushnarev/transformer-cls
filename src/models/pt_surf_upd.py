@@ -77,7 +77,7 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
             hidden_size=self.d_model,
         )
 
-        self.update_surfaces = False
+        self.update_prototypes = False
 
     def forward(
             self,
@@ -109,7 +109,7 @@ class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):
 
         gru_out = self.gru_cell(surf_embedding, self.prototypes.expand(batch_size, -1, -1))
 
-        if self.update_surfaces:
+        if self.update_prototypes:
             with torch.no_grad():
                 updated_prototypes = gru_out.mean(dim=0, keepdims=False)
                 self.prototypes.copy_(updated_prototypes)
@@ -273,7 +273,7 @@ class PrototypicalTransformerSurfUpdateEachStep(PrototypicalTransformerSurfUpdat
             decoder_causal=decoder_causal,
         )
 
-        del self.prototypes, self.update_surfaces
+        del self.prototypes, self.update_prototypes
         self.register_buffer('prototypes', torch.randn(self.n_classes, self.d_model))
 
         self.gru_cell = BatchedGRUCell(
@@ -481,7 +481,7 @@ class PrototypicalTransformerSurfUpdateOne(PrototypicalTransformerSurfUpdates):
         batch_idx = torch.arange(batch_size, device=argmax_cls.device)
         out[batch_idx, argmax_cls] = gru_out
 
-        if self.update_surfaces:
+        if self.update_prototypes:
             with torch.no_grad():
                 updated_prototypes = out.mean(dim=0, keepdims=False)
                 self.prototypes.copy_(updated_prototypes)
@@ -814,7 +814,7 @@ class PrototypicalTransformerSurfUpdateGRU(PrototypicalTransformerSurfUpdates):
             batch_first=self.batch_first
         )
 
-        self.update_surfaces = False
+        self.update_prototypes = False
 
     def forward(
             self,
@@ -869,7 +869,7 @@ class PrototypicalTransformerSurfUpdateGRU(PrototypicalTransformerSurfUpdates):
             .transpose(1, 2)
         )
 
-        if self.update_surfaces:
+        if self.update_prototypes:
             # Shape: (N_proto, D)
             updated_prototypes = gru_out.mean(dim=(0, 1), keepdim=False)
             self.prototypes.copy_(updated_prototypes)
