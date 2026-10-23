@@ -56,20 +56,20 @@ def main():
     storage_db = f'sqlite:///{args.study_dir}/my_study.db'
 
     if args.study_dir.exists():
-        logging.warning('Directory for this study exists: {}\n'.format(args.study_dir))
+        logging.warning('Directory for this study exists: %s\n', args.study_dir)
         if args.overwrite:
             shutil.rmtree(args.study_dir)
             args.study_dir.mkdir(parents=True)
         elif args.resume:
             if (p := args.study_dir / storage_db.split('/')[-1]).exists():
-                print('Resuming study from {}'.format(p))
+                print(f'Resuming study from {p}')
             else:
-                logging.error('No study available at {}\n'
+                logging.error('No study available at %s\n'
                               'Cannot resume\n'
                               'Use different name for the study\n'
                               'or\n'
-                              'Use --overwrite flag to overwrite the directory'
-                              .format(p))
+                              'Use --overwrite flag to overwrite the directory',
+                              p)
                 return
         else:
             logging.error('Cannot proceed\n'
@@ -171,12 +171,12 @@ def main():
 
     study_path = args.study_dir / 'study.joblib'
     joblib.dump(report.study, study_path)
-    logging.info('Study saved to {}'.format(study_path))
+    logging.info('Study saved to %s', study_path)
 
     params_path = args.study_dir / 'best_params.json'
     with open(params_path, 'w') as file:
         json.dump(best_params, file)
-    logging.info('Best params saved to {}'.format(params_path))
+    logging.info('Best params saved to %s', params_path)
 
 
 if __name__ == '__main__':
