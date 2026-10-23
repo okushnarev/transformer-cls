@@ -879,3 +879,63 @@ class PrototypicalTransformerSurfUpdateGRU(PrototypicalTransformerSurfUpdates):
             ).squeeze(2),
             surf_embedding=surf_embedding,
         )
+
+
+class LitPrototypicalTransformerSurfUpdGRU(LitMixedLossModel):
+    def __init__(
+            self,
+            in_dim: int,
+            output_dim: int,
+            in_mlp_hidden_dims: list[int],
+            out_mlp_hidden_dims: list[int],
+            n_pred_steps: int,
+            n_classes: int,
+            temperature: float,
+            d_model: int,
+            n_head: int,
+            num_layers: int,
+            dim_feedforward: int,
+            activation: str,
+            layer_norm_eps: float,
+            dropout: float,
+            decoder_causal: bool,
+            reg_loss: LossTerm | None,
+            cls_loss: LossTerm | None,
+            additional_losses: dict[str, list[LossTerm]] | None,
+            start_lr: float,
+            min_lr: float,
+            lr_patience: int,
+            lr_factor: float,
+    ):
+        super().__init__(
+            reg_loss=reg_loss,
+            cls_loss=cls_loss,
+            additional_losses=additional_losses,
+            start_lr=start_lr,
+            min_lr=min_lr,
+            lr_patience=lr_patience,
+            lr_factor=lr_factor,
+        )
+
+        model = PrototypicalTransformerSurfUpdateGRU(
+            input_dim=in_dim,
+            output_dim=output_dim,
+            in_mlp_hidden_dims=in_mlp_hidden_dims,
+            out_mlp_hidden_dims=out_mlp_hidden_dims,
+            n_pred_steps=n_pred_steps,
+            n_classes=n_classes,
+            temperature=temperature,
+            d_model=d_model,
+            n_head=n_head,
+            num_layers=num_layers,
+            dim_feedforward=dim_feedforward,
+            activation=activation,
+            layer_norm_eps=layer_norm_eps,
+            dropout=dropout,
+            decoder_causal=decoder_causal,
+        )
+
+        self.model = torch.compile(model, disable=True)
+
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        return self.model(*args, **kwargs)
