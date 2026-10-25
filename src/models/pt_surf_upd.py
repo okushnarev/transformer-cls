@@ -1091,7 +1091,7 @@ class PrototypicalTransformerSurfUpdateOneGRU(PrototypicalTransformerSurfUpdates
                 prototype_logits_input, prep_out
             ).squeeze(2),
             surf_embedding=surf_embedding,
-            prototypes=gru_out,
+            prototypes=prep_out,
         )
 
 class LitPrototypicalTransformerSurfUpdOneGRU(LitMixedLossModel):
