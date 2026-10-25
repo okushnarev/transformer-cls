@@ -56,6 +56,11 @@ class VerboseModelOutputSurfEmbedding(VerboseModelOutput):
     surf_embedding: Tensor | None = None
 
 
+@dataclass(frozen=True)
+class VerboseModelOutputPrototypes(VerboseModelOutputSurfEmbedding):
+    prototypes: Tensor | None = None
+
+
 @dataclass
 class LossTerm:
     fn: Callable
