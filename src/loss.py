@@ -19,7 +19,7 @@ def cosine_loss(
         Returns:
             Scalar diversity loss
     """
-    batch_dims, n_vecs, d_model = in_data.shape
+    n_vecs = in_data.size(-2)
 
     if n_vecs < 2:
         return in_data.new_zeros(())
