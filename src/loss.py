@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 import torch.nn.functional as F
 
@@ -81,3 +83,51 @@ def eye_loss(in_data: torch.Tensor) -> torch.Tensor:
     keys_sz = in_data.size(-1)
     tgt = torch.eye(keys_sz).to(in_data.device)
     return (tgt - in_data).square().mean()
+
+
+class AnchorLoss:
+    def __init__(
+            self,
+            ckpt_path: str,
+            param_name: str,
+            margin: float = 0.1,
+    ):
+        self.__name__ = f'anchor_{param_name.split(".")[-1]}'
+
+        self.ckpt_path = Path(ckpt_path)
+        self.param_name = param_name
+        self.margin = margin
+
+        checkpoint = torch.load(
+            self.ckpt_path,
+            map_location='cpu',
+            weights_only=True,
+        )
+
+        state_dict = checkpoint.get('state_dict', checkpoint)
+
+        if self.param_name not in state_dict:
+            raise KeyError(f'Parameter {self.param_name} not found in checkpoint.')
+
+        # Normalize in advance to save computations
+        self._anchors_cpu = F.normalize(state_dict[self.param_name].detach().clone(), dim=-1)
+
+        self._device_cache = {}
+
+    def __call__(self, in_data: torch.Tensor) -> torch.Tensor:
+        key = (in_data.device, in_data.dtype)
+
+        if key not in self._device_cache:
+            self._device_cache[key] = self._anchors_cpu.to(
+                device=in_data.device,
+                dtype=in_data.dtype,
+            )
+
+        in_norm = F.normalize(in_data, dim=-1)
+        anchors_norm = self._device_cache[key]
+
+        sim = (in_norm * anchors_norm).sum(dim=-1)
+        diff = (1 - sim - self.margin).clamp(min=0)
+        loss = (diff ** 2).mean()
+
+        return loss
