@@ -17,3 +17,4 @@ wheels/
 *.sh
 *.ckpt
 .DS_Store
+*tfevents*
