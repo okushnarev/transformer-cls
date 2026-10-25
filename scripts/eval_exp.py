@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument('--stage', type=str, choices=['predict', 'full'], default='predict')
 
     model_group = parser.add_argument_group('Model args')
-    model_group.add_argument('--update-prototypes', type=bool, default=False)
+    model_group.add_argument('--update-prototypes', action='store_true')
 
     dm_group = parser.add_argument_group('Datamodule args')
     dm_group.add_argument('--consecutive-steps', type=int, default=1)
