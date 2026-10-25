@@ -24,6 +24,10 @@ class ProjectPaths:
     def get_exp_dir(cls, group: str, exp_name: str) -> Path:
         return cls._ROOT / 'experiments' / group / exp_name
 
+    @classmethod
+    def get_exp_eval_dir(cls, group: str, exp_name: str) -> Path:
+        return cls.get_exp_dir(group, exp_name) / 'evaluation'
+
 
 if __name__ == '__main__':
     print(ProjectPaths.get_root())
