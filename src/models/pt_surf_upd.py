@@ -1022,7 +1022,7 @@ class PrototypicalTransformerSurfUpdateOneGRU(PrototypicalTransformerSurfUpdates
             self,
             states: torch.Tensor,
             controls: torch.Tensor | None = None,
-    ) -> VerboseModelOutputSurfEmbedding:
+    ) -> VerboseModelOutputPrototypes:
         """Run the prototype Transformer
 
         The state and control vectors are concatenated at every history
@@ -1085,12 +1085,13 @@ class PrototypicalTransformerSurfUpdateOneGRU(PrototypicalTransformerSurfUpdates
         # Shape: (B, S, 1, D)
         prototype_logits_input = surf_embedding.unsqueeze(2)
 
-        return VerboseModelOutputSurfEmbedding(
+        return VerboseModelOutputPrototypes(
             reg_out=ret.reg_out.reshape(B, S, -1),
             cls_out=self.prototype_logits(
                 prototype_logits_input, prep_out
             ).squeeze(2),
             surf_embedding=surf_embedding,
+            prototypes=gru_out,
         )
 
 class LitPrototypicalTransformerSurfUpdOneGRU(LitMixedLossModel):
