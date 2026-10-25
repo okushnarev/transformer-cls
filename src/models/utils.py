@@ -1,5 +1,6 @@
-from dataclasses import dataclass
-from typing import Callable
+from dataclasses import dataclass, field
+from functools import partial
+from typing import Any, Callable
 
 import torch
 from torch import Tensor, nn
@@ -65,6 +66,11 @@ class VerboseModelOutputPrototypes(VerboseModelOutputSurfEmbedding):
 class LossTerm:
     fn: Callable
     weight: float
+    fn_kwargs: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        if self.fn_kwargs:
+            self.fn = partial(self.fn, **self.fn_kwargs)
 
 
 class MultiTaskLoss(nn.Module):
