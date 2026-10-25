@@ -79,6 +79,7 @@ def div_attn_loss(
 
     return div_loss
 
+
 def eye_loss(in_data: torch.Tensor) -> torch.Tensor:
     keys_sz = in_data.size(-1)
     tgt = torch.eye(keys_sz).to(in_data.device)
