@@ -37,7 +37,7 @@ def parse_args():
     model_group.add_argument('--update-prototypes', action='store_true')
 
     dm_group = parser.add_argument_group('Datamodule args')
-    dm_group.add_argument('--consecutive-steps', type=int, default=1)
+    dm_group.add_argument('--consecutive-steps', type=int, default=None)
     dm_group.add_argument('--info-cols', type=list[str], default=['surf', 'movedir', 'exp_idx', 't'])
     dm_group.add_argument('--batch-size', type=int, default=1)
     dm_group.add_argument('--pin-memory', type=bool, default=False)
