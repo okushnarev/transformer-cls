@@ -4,7 +4,8 @@ import torch
 
 
 
-@dataclass(frozen=True)
+
+@dataclass
 class InferenceOut:
     in_data: torch.Tensor
     in_info: torch.Tensor
