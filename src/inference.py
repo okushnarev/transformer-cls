@@ -40,6 +40,7 @@ def model_inference(
         dm_args: dict[str, Any],
         update_prototypes: bool,
         ckpt_type: Literal['best', 'last'] = 'best',
+        no_cache: bool = False,
 ) -> tuple[InferenceOut, nn.Module, L.LightningDataModule]:
     exp_dir = ProjectPaths.get_exp_dir(exp_group, exp_name)
     if not exp_dir.exists():
@@ -47,7 +48,12 @@ def model_inference(
     ckpt = torch.load(f'experiments/{exp_group}/{exp_name}/checkpoints/{ckpt_type}.ckpt', map_location='cpu')
     model_hash = get_model_hash(ckpt['state_dict'])
 
-    return run_model(
+    if no_cache:
+        run_fn = lambda *args, **kwargs: run_model.call(*args, **kwargs)[0]
+    else:
+        run_fn = run_model
+
+    return run_fn(
         exp_group=exp_group,
         exp_name=exp_name,
         exp_dir=exp_dir,
