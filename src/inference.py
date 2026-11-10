@@ -87,8 +87,6 @@ def run_model(
     dm.setup(stage)
     dm.info_cols += [dm._segment_col]
 
-    surf_le = LabelEncoder()
-    dm._transform_cols(surf_le, dm.cls_target)
     match stage:
         case 'full':
             dataloader = dm.full_dataloader()

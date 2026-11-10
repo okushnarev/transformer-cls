@@ -84,8 +84,6 @@ def main():
     dm.setup(args.stage)
     dm.info_cols += [dm._segment_col]
 
-    surf_le = LabelEncoder()
-    dm._transform_cols(surf_le, dm.cls_target)
     match args.stage:
         case 'full':
             dataloader = dm.full_dataloader()
@@ -186,7 +184,7 @@ def main():
             [f'{dm.cls_target}_true', f'{dm.cls_target}_pred']].astype(int)
     df[dm.features] = dm.feature_scaler.inverse_transform(df[dm.features])
     if (sc := 'surf') in df.columns:
-        df[sc] = surf_le.inverse_transform(df[sc].astype(int))
+        df[sc] = dm.label_encoder.inverse_transform(df[sc].astype(int))
 
     _reg_cols = {}
     for col_type in ('true', 'pred'):
@@ -195,9 +193,6 @@ def main():
         if 'reg' in mode:
             _reg_cols[col_type] = [f'{n}_{col_type}' for n in dm.reg_targets]
             df[_reg_cols[col_type]] = dm.reg_scaler.inverse_transform(df[_reg_cols[col_type]])
-
-    if (sc := 'surf') in df.columns:
-        df[sc] = surf_le.inverse_transform(df[sc].astype(int))
 
     # Process results
     # Classification
