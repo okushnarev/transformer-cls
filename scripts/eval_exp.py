@@ -1,28 +1,24 @@
-import pydoc
 import shutil
 import sys
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
-import torch
 import torch.nn.functional as F
-import yaml
 from sklearn.metrics import classification_report, mean_absolute_error as mae, r2_score as r2, \
     root_mean_squared_error as rmse
-from sklearn.preprocessing import LabelEncoder
-from tqdm import tqdm
 
 # Add project root to PATH
 project_root = str(Path.cwd())
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+from src.inference import InferenceOut, model_inference
 from src.datamodules.base import BaseDataModule
 from src.paths import ProjectPaths
 
@@ -32,6 +28,8 @@ def parse_args():
     parser.add_argument('--exp-group', type=str, required=True)
     parser.add_argument('--exp-name', type=str, required=True)
     parser.add_argument('--stage', type=str, choices=['predict', 'full'], default='predict')
+    parser.add_argument('--ckpt-type', type=str, choices=['best', 'last'], default='best')
+    parser.add_argument('--no-cache', action='store_true')
 
     model_group = parser.add_argument_group('Model args')
     model_group.add_argument('--update-prototypes', action='store_true')
@@ -67,89 +65,30 @@ def main():
     fig_dir = eval_dir / 'figures'
     fig_dir.mkdir(exist_ok=True, parents=True)
 
-    with open(exp_dir / 'config.yaml', 'r') as f:
-        config = yaml.safe_load(f)
-
-    model_class_name = config['model']['class_path']
-    model_class = pydoc.locate(model_class_name)
-
-    dm_class_name = config['data']['class_path']
-    dm_class = pydoc.locate(dm_class_name)
-
-    dm_config = config['data']['init_args']
-    dm_config |= dm_args
-    mode: Literal['cls', 'reg', 'cls+reg'] = config['data']['init_args']['mode']
-
-    dm: BaseDataModule = dm_class(**dm_config)
-    dm.setup(args.stage)
-    dm.info_cols += [dm._segment_col]
-
-    match args.stage:
-        case 'full':
-            dataloader = dm.full_dataloader()
-        case 'predict':
-            dataloader = dm.predict_dataloader()
-        case _:
-            raise ValueError(f'Unknown stage: {args.stage}')
-
-    model = model_class.load_from_checkpoint(
-        f'experiments/{args.exp_group}/{args.exp_name}/checkpoints/best.ckpt',
+    out: InferenceOut
+    dm: BaseDataModule
+    out, model, dm = model_inference(
+        exp_group=args.exp_group,
+        exp_name=args.exp_name,
+        stage=args.stage,
+        dm_args=dm_args,
+        update_prototypes=args.update_prototypes,
+        ckpt_type=args.ckpt_type,
+        no_cache=args.no_cache
     )
-    model.eval()
-    model.model.update_prototypes = args.update_prototypes
 
-    # Evaluation
-    print(f'Running evaluation for {args.exp_group} – {args.exp_name}')
+    try:
+        mode = dm.mode
+    except AttributeError:
+        raise RuntimeError(f'No mode attribute in {dm.__class__.__name__}.\nCached `model_inference` function doesn\'t look for model or datamodule class updates. Try running with `--no-cache`')
 
-    in_data = []
-    in_info = []
-    out_reg_pred = []
-    out_reg_true = []
-    out_cls_pred = []
-    out_cls_pred_logits = []
-    out_cls_true = []
-    surf_embeddings = []
-    prototypes = []
-
-    for data in tqdm(dataloader):
-        match mode:
-            case 'cls+reg':
-                X, X_actions, X_info, y_cls, y_reg = data
-            case 'cls':
-                X, X_actions, X_info, y_cls = data
-                y_reg = None
-            case 'reg':
-                X, X_actions, X_info, y_reg = data
-                y_cls = None
-            case _:
-                raise ValueError(f'Unknown mode: {mode}')
-
-        in_data.append(X)
-        in_info.append(X_info)
-        prototypes.append(model.model.prototypes.clone())
-
-        with torch.no_grad():
-            _out = model(X, X_actions)
-        out_reg_pred.append(_out.reg_out)
-        out_reg_true.append(y_reg)
-
-        out_cls_pred_logits.append(_out.cls_out)
-        out_cls_pred.append(_out.cls_out.squeeze(1).argmax(-1, keepdims=True))
-        out_cls_true.append(y_cls)
-
-        surf_embeddings.append(_out.surf_embedding)
-
-    # Prepare outputs
-    with torch.no_grad():
-        proto_history = torch.stack(prototypes)
-
-    all_data = [torch.cat(item).squeeze().cpu().numpy() for item in (
-        in_data,
-        in_info,
-        out_cls_true,
-        out_reg_true,
-        out_cls_pred,
-        out_reg_pred,
+    all_data = [item.squeeze().cpu().numpy() for item in (
+        out.in_data,
+        out.in_info,
+        out.out_cls_true,
+        out.out_reg_true,
+        out.out_cls_pred,
+        out.out_reg_pred,
     )]
 
     # Convert sequences to their last values
@@ -263,7 +202,7 @@ def main():
     print(f'Saved fig for final proto similarities to {fig_path}')
 
     # History of proto similarity
-    proto_hist_norm = F.normalize(proto_history, dim=-1)
+    proto_hist_norm = F.normalize(out.prototypes, dim=-1)
     proto_hist_sim = proto_hist_norm @ proto_hist_norm.transpose(-1, -2)
 
     n_full_frames = 100
