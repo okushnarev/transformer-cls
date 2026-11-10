@@ -27,14 +27,15 @@ class BorealTCDataModule(BaseDataModule):
             pin_memory: bool,
             seed: int,
     ):
+        self.mode = mode
         super().__init__(
             # Dataset-specific arguments
             ds_name='boreal_imu.csv',
             group_cols='exp_idx',
             stratify_col='surf',
             info_cols=info_cols,
-            cls_target='surf' if 'cls' in mode else None,
-            reg_targets=reg_targets if 'reg' in mode and reg_targets else [],
+            cls_target='surf' if 'cls' in self.mode else None,
+            reg_targets=reg_targets if 'reg' in self.mode and reg_targets else [],
             # General arguments
             features=features,
             segment_size=segment_size,

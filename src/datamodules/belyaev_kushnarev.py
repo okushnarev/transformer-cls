@@ -27,14 +27,15 @@ class BelyaevKushnarevDataModule(BaseDataModule):
             pin_memory: bool = True,
             seed: int = 69,
     ):
+        self.mode = mode
         super().__init__(
             # Dataset-specific arguments
             ds_name='belyaev_kushnarev.csv',
             group_cols='exp_idx',
             stratify_col='surf',
             info_cols=info_cols,
-            cls_target='surf' if 'cls' in mode else None,
-            reg_targets=reg_targets or ['dx', 'dy', 'dang'] if 'reg' in mode else [],
+            cls_target='surf' if 'cls' in self.mode else None,
+            reg_targets=reg_targets or ['dx', 'dy', 'dang'] if 'reg' in self.mode else [],
             # General arguments
             features=features,
             segment_size=segment_size,
