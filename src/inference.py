@@ -23,11 +23,11 @@ class InferenceOut:
     in_data: torch.Tensor
     in_info: torch.Tensor
 
-    out_reg_pred: torch.Tensor
-    out_reg_true: torch.Tensor
-
     out_cls_pred: torch.Tensor
     out_cls_true: torch.Tensor
+
+    out_reg_pred: torch.Tensor
+    out_reg_true: torch.Tensor
 
     surf_embeddings: torch.Tensor
     prototypes: torch.Tensor
@@ -149,10 +149,13 @@ def run_model(
         all_data = [torch.cat(item) for item in (
             in_data,
             in_info,
-            out_cls_true,
-            out_reg_true,
+
             out_cls_pred,
+            out_cls_true,
+
             out_reg_pred,
+            out_reg_true,
+
             surf_embeddings
         )]
         proto_history = torch.stack(prototypes)
