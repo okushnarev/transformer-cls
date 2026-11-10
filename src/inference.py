@@ -7,6 +7,8 @@ import joblib
 import torch
 import yaml
 from sklearn.preprocessing import LabelEncoder
+from torch import nn
+import lightning as L
 from tqdm import tqdm
 
 from src.datamodules.base import BaseDataModule
@@ -38,7 +40,7 @@ def model_inference(
         dm_args: dict[str, Any],
         update_prototypes: bool,
         ckpt_type: Literal['best', 'last'] = 'best',
-) -> InferenceOut:
+) -> tuple[InferenceOut, nn.Module, L.LightningDataModule]:
     exp_dir = ProjectPaths.get_exp_dir(exp_group, exp_name)
     if not exp_dir.exists():
         raise FileNotFoundError('Experiment dir does not exist')
@@ -67,7 +69,7 @@ def run_model(
         dm_args: dict[str, Any],
         update_prototypes: bool,
         model_hash: str,
-) -> InferenceOut:
+) -> tuple[InferenceOut, nn.Module, L.LightningDataModule]:
     with open(exp_dir / 'config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
@@ -151,4 +153,4 @@ def run_model(
         )]
         proto_history = torch.stack(prototypes)
 
-    return InferenceOut(*all_data, proto_history)
+    return InferenceOut(*all_data, proto_history), model, dm
