@@ -5,7 +5,6 @@ import torch.nn as nn
 from torch import Tensor
 from torch.nn.functional import mse_loss
 
-from src.loss import div_attn_loss, sharp_attn_loss
 from src.models.base_model import LitMixedLossModel, LitRegressionModel
 from src.models.modules import VerboseTransformerDecoder, VerboseTransformerDecoderLayer
 from src.models.transformer import Transformer

@@ -4,11 +4,10 @@ from pathlib import Path
 from typing import Any, Literal
 
 import joblib
+import lightning as L
 import torch
 import yaml
-from sklearn.preprocessing import LabelEncoder
 from torch import nn
-import lightning as L
 from tqdm import tqdm
 
 from src.datamodules.base import BaseDataModule

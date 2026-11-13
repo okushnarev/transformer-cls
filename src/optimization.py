@@ -1,10 +1,10 @@
 import inspect
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Any
+from typing import Any, Callable
 
-import optuna
 import lightning as L
+import optuna
 import torch
 from optuna.integration import PyTorchLightningPruningCallback
 

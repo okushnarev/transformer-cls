@@ -1,7 +1,8 @@
 import shutil
+from pathlib import Path
 
 from lightning.pytorch.loggers import TensorBoardLogger
-from pathlib import Path
+
 
 class OverwritableTensorBoardLogger(TensorBoardLogger):
     def __init__(self, overwrite=False, *args, **kwargs):

@@ -2,8 +2,8 @@ import math
 
 import torch
 from torch import Tensor
-from torch.nn import Module, TransformerDecoderLayer, TransformerDecoder
-from torch.nn.modules.transformer import _get_seq_len, _detect_is_causal_mask
+from torch.nn import Module, TransformerDecoder, TransformerDecoderLayer
+from torch.nn.modules.transformer import _detect_is_causal_mask, _get_seq_len
 
 
 class PositionalEncoding(Module):

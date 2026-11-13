@@ -9,7 +9,7 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from src.helpers import get_callable_name
-from src.loss import cosine_loss, div_attn_loss, sharp_attn_loss
+from src.loss import cosine_loss
 from src.models.utils import LossTerm, MultiTaskLoss, VerboseModelOutput
 
 

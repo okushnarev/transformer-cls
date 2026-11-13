@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from src.models.base_model import LitMixedLossModel
 from src.models.prototypical_transformer import PrototypicalTransformer
-from src.models.utils import BatchedGRUCell, LossTerm, VerboseModelOutputSurfEmbedding, VerboseModelOutputPrototypes
+from src.models.utils import BatchedGRUCell, LossTerm, VerboseModelOutputPrototypes, VerboseModelOutputSurfEmbedding
 
 
 class PrototypicalTransformerSurfUpdates(PrototypicalTransformer):

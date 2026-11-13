@@ -4,9 +4,9 @@ import lightning as L
 import numpy as np
 import pandas as pd
 import torch
+from pandas import DataFrame
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
-from pandas import DataFrame
 
 from src.data_processing import create_sequences, segment_split
 from src.paths import ProjectPaths
