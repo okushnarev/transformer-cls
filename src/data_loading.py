@@ -1,5 +1,6 @@
 import torch
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import Sampler
 
 
 def pad_batch(batch: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
@@ -9,7 +10,7 @@ def pad_batch(batch: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
     mask = torch.arange(max_len)[None, :] >= lengths[:, None]
     return padded, mask
 
-class ConcatLengthAwareSampler:
+class ConcatLengthAwareSampler(Sampler[list[int]]):
     """
     Yields batches drawn from a single sub-dataset at a time,
     so each batch has uniform sequence length, therefore no padding
