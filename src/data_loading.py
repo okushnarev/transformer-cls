@@ -3,12 +3,14 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Sampler
 
 
-def pad_batch(batch: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
-    lengths = torch.tensor([x.size(0) for x in batch])
-    padded = pad_sequence(batch, batch_first=True, padding_value=0.0)
+def pad_batch(batch: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    xs, ys = zip(*batch)
+    lengths = torch.tensor([x.size(0) for x in xs])
+    padded = pad_sequence(xs, batch_first=True, padding_value=0.0)
     max_len = padded.size(1)
     mask = torch.arange(max_len)[None, :] >= lengths[:, None]
-    return padded, mask
+    y = torch.stack(ys, dim=0)
+    return padded, mask, y
 
 class ConcatLengthAwareSampler(Sampler[list[int]]):
     """
