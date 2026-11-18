@@ -3,6 +3,8 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from torch import Tensor
+from torch.utils.data import TensorDataset, Subset
 
 
 def segment_split(
@@ -29,6 +31,47 @@ def segment_split(
     test_df = df.merge(test_ids, on=group_cols, how='inner')
 
     return train_df, test_df
+
+
+def split_tensor_ds(
+        ds: TensorDataset,
+        targets: Tensor | None = None,
+        test_sz: float = 0.2,
+        val_sz: float = 0.1,
+        seed: int = 69
+) -> tuple[Subset, Subset, Subset]:
+    """
+    Splits tensor dataset with specified params
+
+    :param ds: Tensor dataset to split
+    :param targets: Targets to stratify by. If None, assumes the last tensor in dataset is targets
+    :param test_sz: Part of ds for test split
+    :param val_sz: Part of ds for val split
+    :param seed: Random seed
+    :return: Splits: train, test, val
+    """
+    targets = targets if targets is not None else ds.tensors[-1]
+
+    temp_idx, test_idx, temp_tgts, _ = train_test_split(
+        range(len(ds)),
+        targets,
+        test_size=test_sz,
+        stratify=targets,
+        random_state=seed,
+    )
+
+    train_idx, val_idx = train_test_split(
+        temp_idx,
+        test_size=val_sz / (1 - test_sz),
+        stratify=temp_tgts,
+        random_state=seed,
+    )
+
+    train_dataset = Subset(ds, train_idx)
+    test_dataset = Subset(ds, test_idx)
+    val_dataset = Subset(ds, val_idx)
+
+    return train_dataset, test_dataset, val_dataset
 
 
 def create_sequences(
