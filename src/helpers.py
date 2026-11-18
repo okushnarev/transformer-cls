@@ -1,5 +1,6 @@
 import functools
 import hashlib
+from copy import deepcopy
 
 from sympy.printing.pytorch import torch
 
@@ -35,3 +36,18 @@ def get_model_hash(state_dict) -> str:
         hasher.update(chunk)
 
     return hasher.hexdigest()
+
+
+def insert_to_dict(
+        in_dict: dict[int, tuple[torch.Tensor, ...]] | None,
+        *args: torch.Tensor
+) -> dict[int, tuple[torch.Tensor, ...]]:
+    out_dict = deepcopy(in_dict) if in_dict else dict()
+
+    if (seq_len := args[0].size(1)) in out_dict:
+        prev = out_dict[seq_len]
+        out_dict[seq_len] = tuple(torch.cat((p, n), dim=0) for p, n in zip(prev, args))
+    else:
+        out_dict[seq_len] = args
+
+    return out_dict
