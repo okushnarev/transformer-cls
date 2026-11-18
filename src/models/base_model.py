@@ -93,16 +93,16 @@ class LitBaseModel(L.LightningModule):
 
 class LitClassificationModel(LitBaseModel):
     def training_step(self, batch, batch_idx):
-        X, y = batch
-        outputs = self(X)
+        *X, y = batch
+        outputs = self(*X)
         loss = cross_entropy(outputs, y.squeeze())
         self.log_step_and_epoch_metric('cls/train_loss', loss, batch_idx)
         self.log_step_and_epoch_metric('overall/train_loss', loss, batch_idx)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        X, y = batch
-        outputs = self(X)
+        *X, y = batch
+        outputs = self(*X)
         # loss
         loss = cross_entropy(outputs, y.squeeze())
         self.log_step_and_epoch_metric('cls/val_loss', loss, batch_idx, stage='val')
