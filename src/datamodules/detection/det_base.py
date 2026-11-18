@@ -49,7 +49,7 @@ class BaseDetectionDataModule(L.LightningDataModule):
             tensors = insert_to_dict(tensors, X_part_true, y_part_true)
 
             X_part_false = torch.cat((X_part_true, true_surf_proto.repeat_interleave(combs.size(0), dim=0)), dim=1)
-            y_part_false = torch.ones(X_part_false.size(0), 1)
+            y_part_false = torch.zeros(X_part_false.size(0), 1)
             tensors = insert_to_dict(tensors, X_part_false, y_part_false)
 
         ds_parts = [TensorDataset(*v) for v in tensors.values()]
