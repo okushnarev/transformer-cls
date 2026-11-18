@@ -22,9 +22,11 @@ class ConcatLengthAwareSampler(Sampler[list[int]]):
             self,
             sizes: list[int],
             batch_size: int,
+            shuffle: bool
     ):
         self.sizes = sizes
         self.batch_size = batch_size
+        self.shuffle = shuffle
 
         # Offsets of each sub-dataset
         self.offsets = [0]
@@ -35,13 +37,15 @@ class ConcatLengthAwareSampler(Sampler[list[int]]):
         # Build one batch index list per sub-dataset
         all_batches = []
         for offset, size in zip(self.offsets, self.sizes):
-            local = torch.randperm(size)
+            local = torch.randperm(size) if self.shuffle else torch.arange(size)
             for i in range(0, size, self.batch_size):
                 chunk = local[i:i + self.batch_size]
                 all_batches.append(chunk + offset)
-        # Shuffle batches
-        indices = torch.randperm(len(all_batches))
-        all_batches = [all_batches[idx] for idx in indices]
+
+        if self.shuffle:
+            indices = torch.randperm(len(all_batches))
+            all_batches = [all_batches[idx] for idx in indices]
+
         return iter(all_batches)
 
     def __len__(self):
