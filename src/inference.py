@@ -43,6 +43,12 @@ class InferenceOut:
         d = torch.load(path, map_location=map_location, weights_only=True)
         return cls(**d)
 
+    def to(self, device: str| torch.device) -> Self:
+        return InferenceOut(**{k: v.to(device) for k, v in asdict(self).items()})
+
+    def cpu(self) -> Self:
+        return self.to('cpu')
+
 
 def model_inference(
         exp_group: str,
