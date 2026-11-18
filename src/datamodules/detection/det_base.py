@@ -45,11 +45,11 @@ class BaseDetectionDataModule(L.LightningDataModule):
         for n_items in range(1, N):
             combs = torch.combinations(torch.arange(other_surf_proto.size(1)), n_items)
             X_part_true = other_surf_proto[:, combs].view(-1, n_items, D)
-            y_part_true = torch.ones(X_part_true.size(0), 1)
+            y_part_true = torch.ones(X_part_true.size(0), 1, dtype=torch.long)
             tensors = insert_to_dict(tensors, X_part_true, y_part_true)
 
             X_part_false = torch.cat((X_part_true, true_surf_proto.repeat_interleave(combs.size(0), dim=0)), dim=1)
-            y_part_false = torch.zeros(X_part_false.size(0), 1)
+            y_part_false = torch.zeros(X_part_false.size(0), 1, dtype=torch.long)
             tensors = insert_to_dict(tensors, X_part_false, y_part_false)
 
         ds_parts = [TensorDataset(*v) for v in tensors.values()]
