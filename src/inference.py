@@ -1,7 +1,7 @@
 import pydoc
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 import joblib
 import lightning as L
@@ -30,6 +30,18 @@ class InferenceOut:
 
     surf_embeddings: torch.Tensor
     prototypes: torch.Tensor
+
+    def save(self, path: str, *, cpu: bool = True) -> None:
+        """Store as a plain dict of tensors (no pickle of the class)"""
+        d = {k: (v.detach().cpu() if cpu else v.detach())
+             for k, v in asdict(self).items()}
+        torch.save(d, path)
+
+    @classmethod
+    def load(cls, path: str, *, map_location: str| torch.device = 'cpu') -> Self:
+        """Load dataclass from path"""
+        d = torch.load(path, map_location=map_location, weights_only=True)
+        return cls(**d)
 
 
 def model_inference(
