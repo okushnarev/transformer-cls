@@ -19,7 +19,7 @@ class BaseDetectionDataModule(L.LightningDataModule):
             batch_size: int,
             num_workers: int,
             pin_memory: bool,
-            seed: int = 69,
+            seed: int,
     ):
         super().__init__()
 
