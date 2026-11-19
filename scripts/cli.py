@@ -1,13 +1,15 @@
 import torch
+import torch._inductor.config as inductor_config
 from lightning.pytorch.cli import LightningCLI
-
-torch.set_float32_matmul_precision('medium')
 
 import sys
 from pathlib import Path
 import logging
 
 logging.basicConfig(level=logging.INFO)
+if hasattr(inductor_config.triton, 'coalesce_tiling_analysis'):
+    inductor_config.triton.coalesce_tiling_analysis = False
+torch.set_float32_matmul_precision('medium')
 
 # Add project root to PATH
 project_root = Path(__file__).resolve().parent.parent
