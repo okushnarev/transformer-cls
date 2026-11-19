@@ -73,6 +73,7 @@ class DetectionTransformer(Module):
             self,
             x: Tensor,
             src_key_padding_mask: Tensor | None,
+            surf_embedding: Tensor | None,
     ) -> Tensor:
         batch_size = x.size(0)
         x = self.in_proj(x)
@@ -81,10 +82,10 @@ class DetectionTransformer(Module):
         if x.size(-1) != cls_token.size(-1):
             raise ValueError(f'Input ({x.shape}) and cls token ({cls_token.shape}) should match at the last dimension')
 
-        enc_in = torch.cat((cls_token, x), dim=1)
+        enc_in = torch.cat((cls_token, surf_embedding, x), dim=1)
         skp_mask_with_token = torch.cat(
             (
-                torch.zeros(cls_token.shape[0:2], dtype=torch.bool, device=x.device),
+                torch.zeros(batch_size, cls_token.size(1) + surf_embedding.size(1), dtype=torch.bool, device=x.device),
                 src_key_padding_mask
             ),
             dim=1
@@ -132,3 +133,40 @@ class LitDetectionTransformer(LitClassificationModel):
 
     def forward(self, *args) -> Any:
         return self.model(*args)
+
+
+if __name__ == '__main__':
+    from src.datamodules.detection.det_base import BaseDetectionDataModule
+    import lightning as L
+    from pathlib import Path
+
+    dm = BaseDetectionDataModule(
+        predictions_path=Path('datasets/bk_exp76_preds.pt'),
+        test_size=0.2,
+        val_size=0.1,
+        batch_size=100,
+        num_workers=2,
+        pin_memory=True,
+        seed=69,
+    )
+    dm.setup('train')
+
+    model = LitDetectionTransformer(
+        input_dim=None,
+        in_mlp_hidden_dims=[],
+        d_model=32,
+        dim_feedforward=64,
+        n_head=1,
+        num_layers=1,
+        activation='gelu',
+
+        compile_model=False,
+
+        start_lr=0.001,
+        min_lr=0.00001,
+        lr_factor=0.5,
+        lr_patience=20,
+    )
+
+    trainer = L.Trainer()
+    trainer.fit(model, dm)
