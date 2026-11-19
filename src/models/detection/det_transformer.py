@@ -84,7 +84,7 @@ class DetectionTransformer(Module):
         enc_in = torch.cat((cls_token, x), dim=1)
         skp_mask_with_token = torch.cat(
             (
-                torch.zeros(cls_token.shape[0:2], dtype=torch.bool),
+                torch.zeros(cls_token.shape[0:2], dtype=torch.bool, device=x.device),
                 src_key_padding_mask
             ),
             dim=1
