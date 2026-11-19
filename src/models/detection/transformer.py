@@ -105,6 +105,8 @@ class LitDetectionTransformer(LitClassificationModel):
             num_layers: int,
             activation: str,
 
+            compile_model: bool,
+
             start_lr: float,
             min_lr: float,
             lr_patience: int,
@@ -126,7 +128,7 @@ class LitDetectionTransformer(LitClassificationModel):
             num_layers=num_layers,
             activation=activation,
         )
-        self.model = torch.compile(model, disable=True)
+        self.model = torch.compile(model, disable=not compile_model)
 
     def forward(self, *args) -> Any:
         return self.model(*args)
