@@ -1,9 +1,13 @@
 import pydoc
+from pathlib import Path
+from typing import Any, Literal
 
+import lightning as L
 import yaml
+from torch import nn
 
 
-def load_model(exp_dir, ckpt_type):
+def load_model(exp_dir: Path, ckpt_type: Literal['best', 'last'] = 'best') -> nn.Module:
     with open(exp_dir / 'config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
@@ -15,7 +19,7 @@ def load_model(exp_dir, ckpt_type):
     return model
 
 
-def load_datamodule(exp_dir, dm_args):
+def load_datamodule(exp_dir: Path, dm_args: dict[str, Any]) -> L.LightningDataModule:
     with open(exp_dir / 'config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
