@@ -8,6 +8,7 @@ from torch import nn
 
 
 def load_model(exp_dir: Path, ckpt_type: Literal['best', 'last'] = 'best') -> nn.Module:
+    """Loads model from experiment dir with auto class discovery by config file parsing"""
     with open(exp_dir / 'config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
@@ -20,6 +21,7 @@ def load_model(exp_dir: Path, ckpt_type: Literal['best', 'last'] = 'best') -> nn
 
 
 def load_datamodule(exp_dir: Path, dm_args: dict[str, Any]) -> L.LightningDataModule:
+    """Loads datamodule from experiment dir with auto class discovery by config file parsing"""
     with open(exp_dir / 'config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
