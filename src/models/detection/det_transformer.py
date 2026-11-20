@@ -131,8 +131,8 @@ class LitDetectionTransformer(LitClassificationModel):
         )
         self.model = torch.compile(model, disable=not compile_model)
 
-    def forward(self, *args) -> Any:
-        return self.model(*args)
+    def forward(self, *args, **kwargs) -> Any:
+        return self.model(*args, **kwargs)
 
 
 if __name__ == '__main__':
