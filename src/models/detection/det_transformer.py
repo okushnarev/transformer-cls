@@ -77,6 +77,7 @@ class DetectionTransformer(Module):
     ) -> Tensor:
         batch_size = x.size(0)
         x = self.in_proj(x)
+        surf_embedding = self.in_proj(surf_embedding)
         cls_token = self.cls_token[None, None, :].expand(batch_size, -1, -1)
 
         if x.size(-1) != cls_token.size(-1):
