@@ -37,7 +37,7 @@ class BaseDetectionDataModule(L.LightningDataModule):
 
         idx_range = torch.arange(N).unsqueeze(0).repeat(B, 1)
         mask = torch.ones_like(idx_range, dtype=torch.bool)
-        mask[torch.arange(B), predictions.out_cls_true.squeeze()] = False
+        mask[torch.arange(B), predictions.out_cls_pred.squeeze()] = False
 
         true_surf_proto = predictions.prototypes[~mask].view(B, 1, D)
         other_surf_proto = predictions.prototypes[mask].view(B, N - 1, D)
