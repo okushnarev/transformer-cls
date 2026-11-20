@@ -9,6 +9,7 @@ import yaml
 from torch import nn
 from tqdm import tqdm
 
+from src.datamodules.base import BaseDataModule
 from src.helpers import get_model_hash
 from src.io import load_datamodule, load_model
 from src.paths import ProjectPaths
@@ -95,7 +96,7 @@ def run_model(
 
     model = load_model(exp_dir, ckpt_type)
 
-    dm = load_datamodule(exp_dir, dm_args)
+    dm: BaseDataModule = load_datamodule(exp_dir, dm_args)
     dm.setup(stage)
     dm.info_cols += [dm._segment_col]
 
