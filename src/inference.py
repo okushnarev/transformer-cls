@@ -71,8 +71,6 @@ def model_inference(
         run_fn = run_model
 
     return run_fn(
-        exp_group=exp_group,
-        exp_name=exp_name,
         exp_dir=exp_dir,
         ckpt_type=ckpt_type,
         stage=stage,
@@ -84,8 +82,6 @@ def model_inference(
 
 @memory.cache
 def run_model(
-        exp_group: str,
-        exp_name: str,
         exp_dir: Path,
         ckpt_type: Literal['best', 'last'],
         stage: str,
@@ -119,13 +115,11 @@ def run_model(
             raise ValueError(f'Unknown stage: {stage}')
 
     model = model_class.load_from_checkpoint(
-        f'experiments/{exp_group}/{exp_name}/checkpoints/{ckpt_type}.ckpt',
+        exp_dir / f'checkpoints/{ckpt_type}.ckpt',
     )
     model.eval()
     model.model.update_prototypes = update_prototypes
     # Evaluation
-    print(f'Running evaluation for {exp_group} – {exp_name}')
-
     in_data = []
     in_info = []
     out_reg_pred = []
