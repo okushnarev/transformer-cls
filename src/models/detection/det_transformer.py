@@ -73,7 +73,7 @@ class DetectionTransformer(Module):
             self,
             x: Tensor,
             src_key_padding_mask: Tensor | None,
-            surf_embedding: Tensor | None,
+            surf_embedding: Tensor,
     ) -> Tensor:
         batch_size = x.size(0)
         x = self.in_proj(x)
