@@ -89,7 +89,7 @@ class DetectionTransformer(Module):
                 src_key_padding_mask
             ),
             dim=1
-        )
+        ) if src_key_padding_mask is not None else None
         enc_out = self.in_encoder(enc_in, src_key_padding_mask=skp_mask_with_token)
         cls_out = self.cls_ffn(enc_out[:, 0, :])
         return cls_out
