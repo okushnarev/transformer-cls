@@ -91,12 +91,11 @@ def run_model(
     with open(exp_dir / 'config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
-    model = load_model(exp_dir, ckpt_type)
-
     mode: Literal['cls', 'reg', 'cls+reg'] = config['data']['init_args']['mode']
 
-    dm = load_datamodule(exp_dir, dm_args)
+    model = load_model(exp_dir, ckpt_type)
 
+    dm = load_datamodule(exp_dir, dm_args)
     dm.setup(stage)
     dm.info_cols += [dm._segment_col]
 
