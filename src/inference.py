@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from src.datamodules.base import BaseDataModule
 from src.helpers import get_model_hash
+from src.io import load_model
 from src.paths import ProjectPaths
 
 memory = joblib.Memory(ProjectPaths.get_root() / '.math_cache', verbose=0)
@@ -38,12 +39,12 @@ class InferenceOut:
         torch.save(d, path)
 
     @classmethod
-    def load(cls, path: Path | str, *, map_location: str| torch.device = 'cpu') -> Self:
+    def load(cls, path: Path | str, *, map_location: str | torch.device = 'cpu') -> Self:
         """Load dataclass from path"""
         d = torch.load(path, map_location=map_location, weights_only=True)
         return cls(**d)
 
-    def to(self, device: str| torch.device) -> Self:
+    def to(self, device: str | torch.device) -> Self:
         return InferenceOut(**{k: v.to(device) for k, v in asdict(self).items()})
 
     def cpu(self) -> Self:
@@ -92,8 +93,7 @@ def run_model(
     with open(exp_dir / 'config.yaml', 'r') as f:
         config = yaml.safe_load(f)
 
-    model_class_name = config['model']['class_path']
-    model_class = pydoc.locate(model_class_name)
+    model = load_model(exp_dir, ckpt_type)
 
     dm_class_name = config['data']['class_path']
     dm_class = pydoc.locate(dm_class_name)
@@ -114,9 +114,6 @@ def run_model(
         case _:
             raise ValueError(f'Unknown stage: {stage}')
 
-    model = model_class.load_from_checkpoint(
-        exp_dir / f'checkpoints/{ckpt_type}.ckpt',
-    )
     model.eval()
     model.model.update_prototypes = update_prototypes
     # Evaluation
