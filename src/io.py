@@ -13,3 +13,16 @@ def load_model(exp_dir, ckpt_type):
         exp_dir / f'checkpoints/{ckpt_type}.ckpt',
     )
     return model
+
+
+def load_datamodule(exp_dir, dm_args):
+    with open(exp_dir / 'config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+
+    dm_class_name = config['data']['class_path']
+    dm_class = pydoc.locate(dm_class_name)
+    dm_config = config['data']['init_args']
+    dm_config |= dm_args
+    dm = dm_class(**dm_config)
+
+    return dm

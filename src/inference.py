@@ -1,4 +1,3 @@
-import pydoc
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal, Self
@@ -10,9 +9,8 @@ import yaml
 from torch import nn
 from tqdm import tqdm
 
-from src.datamodules.base import BaseDataModule
 from src.helpers import get_model_hash
-from src.io import load_model
+from src.io import load_datamodule, load_model
 from src.paths import ProjectPaths
 
 memory = joblib.Memory(ProjectPaths.get_root() / '.math_cache', verbose=0)
@@ -95,14 +93,10 @@ def run_model(
 
     model = load_model(exp_dir, ckpt_type)
 
-    dm_class_name = config['data']['class_path']
-    dm_class = pydoc.locate(dm_class_name)
-
-    dm_config = config['data']['init_args']
-    dm_config |= dm_args
     mode: Literal['cls', 'reg', 'cls+reg'] = config['data']['init_args']['mode']
 
-    dm: BaseDataModule = dm_class(**dm_config)
+    dm = load_datamodule(exp_dir, dm_args)
+
     dm.setup(stage)
     dm.info_cols += [dm._segment_col]
 
